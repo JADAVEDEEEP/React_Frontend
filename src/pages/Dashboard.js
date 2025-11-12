@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 
-const API_URL = "http://localhost:3001/api" ||"https://react-frontend-qgls.vercel.app";
+const API_URL = "http://localhost:3001/api" ||"https://react-frontend-vakw.vercel.app";
 
 export default function Dashboard() {
   const navigate = useNavigate();

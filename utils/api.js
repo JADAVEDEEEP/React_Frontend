@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api" || "https://your-backend.vercel.app/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api" || "https://react-frontend-vakw.vercel.app";
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
