@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 
-const API_URL = "http://localhost:3001/api"||"https://your-backend.vercel.app/api";
+const API_URL = "http://localhost:3001/api" ||"https://react-frontend-qgls.vercel.app";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -74,6 +74,7 @@ export default function Dashboard() {
 
     setUser({ id: userId, name: userName, email: userEmail });
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once
 
   // Filter and sort products
