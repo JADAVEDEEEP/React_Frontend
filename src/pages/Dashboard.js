@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
@@ -19,10 +20,35 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState('date');
 
   const token = localStorage.getItem('token');
+
+  // Axios instance with auth header
   const axiosInstance = axios.create({
     headers: { Authorization: `Bearer ${token}` }
   });
 
+  // Toast helper
+  const showToast = useCallback((message, type) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Fetch products
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get(API_URL);
+      const productsArray = Array.isArray(res.data.data) ? res.data.data : [];
+      setProducts(productsArray);
+      setFilteredProducts(productsArray);
+    } catch (err) {
+      showToast('Failed to load products', 'error');
+      console.error(err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [axiosInstance, showToast]);
+
+  // Initial load
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -35,41 +61,32 @@ export default function Dashboard() {
 
     setUser({ id: userId, name: userName, email: userEmail });
     fetchProducts();
-  }, [navigate]);
+  }, [token, navigate, fetchProducts]);
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(API_URL);
-      const productsArray = Array.isArray(res.data.data) ? res.data.data : [];
-      setProducts(productsArray);
-      setFilteredProducts(productsArray);
-    } catch (err) {
-      showToast('Failed to load products', 'error');
-      console.error(err.response?.data || err.message);
-    } finally { setLoading(false); }
-  };
-
-  const showToast = (message, type) => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const filterAndSortProducts = () => {
+  // Filter and sort products
+  const filterAndSortProducts = useCallback(() => {
     let filtered = [...products];
+
     if (searchTerm.trim()) {
-      filtered = filtered.filter(p => p?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+      filtered = filtered.filter(p =>
+        p?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
+
     filtered.sort((a, b) => {
       if (sortBy === 'name') return a?.name?.localeCompare(b?.name);
       if (sortBy === 'price') return (b?.price || 0) - (a?.price || 0);
       return new Date(b?.createdAt) - new Date(a?.createdAt);
     });
+
     setFilteredProducts(filtered);
-  };
+  }, [products, searchTerm, sortBy]);
 
-  useEffect(() => { filterAndSortProducts(); }, [searchTerm, sortBy, products]);
+  useEffect(() => {
+    filterAndSortProducts();
+  }, [filterAndSortProducts]);
 
+  // CRUD handlers
   const handleCreate = async (data) => {
     try {
       setFormLoading(true);
@@ -81,7 +98,9 @@ export default function Dashboard() {
     } catch (err) {
       showToast('Error creating product', 'error');
       console.error(err.response?.data || err.message);
-    } finally { setFormLoading(false); }
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleUpdate = async (data) => {
@@ -96,7 +115,9 @@ export default function Dashboard() {
     } catch (err) {
       showToast('Error updating product', 'error');
       console.error(err.response?.data || err.message);
-    } finally { setFormLoading(false); }
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -168,16 +189,26 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody>
-            {Array.isArray(filteredProducts) && filteredProducts.filter(p => p).map((p, index) => (
+            {filteredProducts.map((p, index) => (
               <tr key={p._id}>
                 <td>{index + 1}</td>
-                <td>{p?.name}</td>
-                <td>{p?.description}</td>
-                <td>{p?.price}</td>
-                <td>{p?.quantity}</td>
+                <td>{p.name}</td>
+                <td>{p.description}</td>
+                <td>{p.price}</td>
+                <td>{p.quantity}</td>
                 <td>
-                  <button className="btn btn-sm btn-warning me-2" onClick={() => { setSelectedProduct(p); setShowForm(true); }}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p._id)}>Delete</button>
+                  <button
+                    className="btn btn-sm btn-warning me-2"
+                    onClick={() => { setSelectedProduct(p); setShowForm(true); }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(p._id)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -205,6 +236,7 @@ export default function Dashboard() {
   );
 }
 
+// --- Product Form Component ---
 function ProductForm({ product, onSubmit, onCancel, loading }) {
   const [form, setForm] = useState({
     name: product?.name || '',
