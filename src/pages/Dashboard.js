@@ -1,4 +1,3 @@
-// src/pages/Dashboard.js
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -20,8 +19,11 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [theme, setTheme] = useState('A');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const token = localStorage.getItem('token');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   const axiosInstance = useMemo(() => {
     return axios.create({
@@ -59,17 +61,19 @@ export default function Dashboard() {
   }, [axiosInstance, showToast]);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    const userEmail = localStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName');
+    if (typeof window !== 'undefined') {
+      const userId = localStorage.getItem('userId');
+      const userEmail = localStorage.getItem('userEmail');
+      const userName = localStorage.getItem('userName');
 
-    if (!token) {
-      navigate('/login');
-      return;
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      setUser({ id: userId, name: userName, email: userEmail });
+      fetchProducts();
     }
-
-    setUser({ id: userId, name: userName, email: userEmail });
-    fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -90,7 +94,6 @@ export default function Dashboard() {
     setFilteredProducts(filtered);
   }, [products, searchTerm, sortBy]);
 
-  // Calculate real statistics from products
   const stats = useMemo(() => {
     const totalProducts = products.length;
     const totalRevenue = products.reduce((sum, p) => sum + (parseFloat(p.price) * parseInt(p.quantity) || 0), 0);
@@ -100,7 +103,6 @@ export default function Dashboard() {
     return { totalProducts, totalRevenue, totalQuantity, avgPrice };
   }, [products]);
 
-  // Chart 1: Top Products by Price (Bar Chart)
   const priceChartData = useMemo(() => {
     return products
       .slice()
@@ -112,7 +114,6 @@ export default function Dashboard() {
       }));
   }, [products]);
 
-  // Chart 2: Quantity Distribution (Bar Chart)
   const quantityChartData = useMemo(() => {
     return products
       .slice()
@@ -124,7 +125,6 @@ export default function Dashboard() {
       }));
   }, [products]);
 
-  // Chart 3: Product Value Distribution (Pie Chart - Price * Quantity)
   const valueDistributionData = useMemo(() => {
     const topProducts = products
       .map(p => ({
@@ -143,7 +143,6 @@ export default function Dashboard() {
     }));
   }, [products]);
 
-  // Chart 4: Price Range Distribution (Line Chart)
   const priceRangeData = useMemo(() => {
     const ranges = [
       { range: '$0-50', min: 0, max: 50 },
@@ -162,7 +161,6 @@ export default function Dashboard() {
     }));
   }, [products]);
 
-  // Recent transactions based on products
   const recentTransactions = useMemo(() => {
     return products.slice(0, 5).map((p) => ({
       product: p.name || 'Unknown Product',
@@ -220,43 +218,255 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+    }
     navigate('/login');
   };
 
+  // Theme colors
+  const themeColors = {
+    A: { primary: '#0d6efd', secondary: '#6c757d', accent: '#0dcaf0' },
+    B: { primary: '#ffc107', secondary: '#fd7e14', accent: '#20c997' },
+    C: { primary: '#212529', secondary: '#495057', accent: '#6c757d' }
+  };
+
+  const currentTheme = themeColors[theme];
+
   return (
-    <div className="container-fluid" style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <div className="row">
-        {/* Sidebar */}
-        <div className="col-md-2 bg-white shadow-sm vh-100 position-sticky top-0" style={{ borderRight: '1px solid #dee2e6' }}>
-          <div className="p-4">
-            <div className="d-flex align-items-center mb-4">
-              <div className="bg-primary text-white rounded-3 p-2 me-2" style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <strong>B</strong>
+    <div className="d-flex flex-column" style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+      {/* Top Navbar */}
+      <style>{`
+        .hp-header {
+          background: white;
+          padding: 1rem 2rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+        }
+        .hp-brand {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-weight: 900;
+        }
+        .hp-badge {
+          font-size: 10px;
+          background: ${currentTheme.primary};
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+        .hp-nav {
+          gap: 1.5rem;
+        }
+        .nav-link {
+          color: #333;
+          text-decoration: none;
+          font-weight: 500;
+          transition: color 0.3s;
+        }
+        .nav-link:hover {
+          color: ${currentTheme.primary};
+        }
+        .mobile-menu {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100vh;
+          background: white;
+          z-index: 9999;
+          padding: 2rem;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease-in-out;
+        }
+        .mobile-menu.open {
+          transform: translateX(0);
+        }
+        .sidebar {
+          transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+          .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 999;
+            transform: translateX(-100%);
+          }
+          .sidebar.open {
+            transform: translateX(0);
+          }
+          .hp-header {
+            padding: 1rem;
+          }
+        }
+      `}</style>
+
+      <div className="hp-header">
+        <div className="d-flex justify-content-between align-items-center">
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="btn btn-link d-md-none p-0 me-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{ fontSize: '24px', textDecoration: 'none' }}
+          >
+            ☰
+          </button>
+
+          {/* BRAND LOGO */}
+          <div className="d-flex align-items-center gap-3">
+            <div className="hp-brand">
+              <span style={{ fontSize: 22 }}>🛍️</span>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>Trendzz</div>
+                <div className="hp-badge">Seller Dashboard</div>
               </div>
-              <h5 className="mb-0 fw-bold">BayaPay</h5>
             </div>
+          </div>
+
+          {/* NAV LINKS + THEME + BUTTONS */}
+          <div className="d-flex align-items-center">
+            {/* DESKTOP NAV LINKS */}
+            <nav className="hp-nav d-none d-lg-flex">
+              <a className="nav-link" href="/">Home</a>
+              <a className="nav-link" href="/collection">Collection</a>
+              <a className="nav-link" href="/shop">Shop</a>
+              <a className="nav-link" href="/about">About</a>
+            </nav>
+
+            {/* THEME BUTTONS */}
+            <div className="d-none d-sm-flex align-items-center ms-3 me-2">
+              <button
+                className={`btn btn-sm me-1 ${theme === "A" ? "btn-primary" : "btn-outline-primary"}`}
+                onClick={() => setTheme("A")}
+              >
+                A
+              </button>
+              <button
+                className={`btn btn-sm me-1 ${theme === "B" ? "btn-warning" : "btn-outline-warning"}`}
+                onClick={() => setTheme("B")}
+              >
+                B
+              </button>
+              <button
+                className={`btn btn-sm ${theme === "C" ? "btn-dark" : "btn-outline-dark"}`}
+                onClick={() => setTheme("C")}
+              >
+                C
+              </button>
+            </div>
+
+            {/* User Info - Desktop */}
+            <span className="me-3 d-none d-md-inline">
+              Welcome, <strong>{user.name || 'User'}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h5 className="mb-0 fw-bold">Menu</h5>
+          <button 
+            className="btn btn-link p-0"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ fontSize: '24px', textDecoration: 'none' }}
+          >
+            ✕
+          </button>
+        </div>
+        
+        <nav className="d-flex flex-column gap-3">
+          <a className="nav-link" href="/" onClick={() => setMobileMenuOpen(false)}>Home</a>
+          <a className="nav-link" href="/collection" onClick={() => setMobileMenuOpen(false)}>Collection</a>
+          <a className="nav-link" href="/shop" onClick={() => setMobileMenuOpen(false)}>Shop</a>
+          <a className="nav-link" href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
+          
+          <hr />
+          
+          <div className="d-flex gap-2 mb-3">
+            <button
+              className={`btn btn-sm ${theme === "A" ? "btn-primary" : "btn-outline-primary"}`}
+              onClick={() => setTheme("A")}
+            >
+              Theme A
+            </button>
+            <button
+              className={`btn btn-sm ${theme === "B" ? "btn-warning" : "btn-outline-warning"}`}
+              onClick={() => setTheme("B")}
+            >
+              Theme B
+            </button>
+            <button
+              className={`btn btn-sm ${theme === "C" ? "btn-dark" : "btn-outline-dark"}`}
+              onClick={() => setTheme("C")}
+            >
+              Theme C
+            </button>
+          </div>
+          
+          <button className="btn btn-outline-danger w-100" onClick={handleLogout}>
+            🚪 Logout
+          </button>
+        </nav>
+      </div>
+
+      <div className="d-flex flex-grow-1">
+        {/* Sidebar Toggle Button (Mobile) */}
+        <button 
+          className="btn btn-primary d-md-none position-fixed"
+          style={{ bottom: '20px', right: '20px', zIndex: 998, borderRadius: '50%', width: '50px', height: '50px' }}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          📊
+        </button>
+
+        {/* Sidebar */}
+        <div className={`sidebar bg-white shadow-sm ${sidebarOpen ? 'open' : ''}`} style={{ width: '250px', borderRight: '1px solid #dee2e6', minHeight: 'calc(100vh - 73px)' }}>
+          <div className="p-4">
+            <button 
+              className="btn btn-link d-md-none p-0 mb-3"
+              onClick={() => setSidebarOpen(false)}
+              style={{ fontSize: '20px', textDecoration: 'none' }}
+            >
+              ✕ Close
+            </button>
 
             <ul className="nav flex-column">
               <li className="nav-item mb-2">
                 <button
-                  className={`nav-link btn text-start w-100 ${activeTab === 'dashboard' ? 'btn-primary text-white' : 'btn-light'}`}
-                  onClick={() => setActiveTab('dashboard')}
+                  className={`nav-link btn text-start w-100 ${activeTab === 'dashboard' ? 'text-white' : 'btn-light'}`}
+                  style={activeTab === 'dashboard' ? { backgroundColor: currentTheme.primary } : {}}
+                  onClick={() => {
+                    setActiveTab('dashboard');
+                    setSidebarOpen(false);
+                  }}
                 >
                   📊 Dashboard
                 </button>
               </li>
               <li className="nav-item mb-2">
                 <button
-                  className={`nav-link btn text-start w-100 ${activeTab === 'products' ? 'btn-primary text-white' : 'btn-light'}`}
-                  onClick={() => setActiveTab('products')}
+                  className={`nav-link btn text-start w-100 ${activeTab === 'products' ? 'text-white' : 'btn-light'}`}
+                  style={activeTab === 'products' ? { backgroundColor: currentTheme.primary } : {}}
+                  onClick={() => {
+                    setActiveTab('products');
+                    setSidebarOpen(false);
+                  }}
                 >
                   📦 Products
                 </button>
               </li>
             </ul>
 
-            <div className="position-absolute bottom-0 start-0 w-100 p-3">
+            <div className="mt-4 d-none d-md-block">
               <button className="btn btn-outline-danger w-100" onClick={handleLogout}>
                 🚪 Logout
               </button>
@@ -265,24 +475,9 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <div className="col-md-10 p-0">
-          {/* Top Bar */}
-          <div className="bg-white shadow-sm border-bottom sticky-top">
-            <div className="container-fluid">
-              <div className="d-flex justify-content-between align-items-center py-3">
-                <h3 className="mb-0 fw-bold">Merchant Dashboard</h3>
-                <div className="d-flex align-items-center gap-2">
-                  <span className="me-3">Welcome, <strong>{user.name || 'User'}</strong></span>
-                  <button className="btn btn-light btn-sm">🔍</button>
-                  <button className="btn btn-light btn-sm">🔔</button>
-                  <button className="btn btn-light btn-sm">⚙️</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div className="flex-grow-1">
           {activeTab === 'dashboard' ? (
-            <div className="p-4">
+            <div className="p-3 p-md-4">
               {loading ? (
                 <div className="text-center py-5">
                   <div className="spinner-border text-primary" role="status">
@@ -293,76 +488,75 @@ export default function Dashboard() {
               ) : (
                 <>
                   {/* Stats Cards */}
-                  <div className="row g-4 mb-4">
-                    <div className="col-md-3">
+                  <div className="row g-3 g-md-4 mb-4">
+                    <div className="col-6 col-md-3">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start mb-3">
-                            <div className="bg-primary bg-opacity-10 p-3 rounded-3">
-                              <span style={{ fontSize: '24px' }}>📦</span>
+                        <div className="card-body p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="p-2 rounded-3" style={{ backgroundColor: `${currentTheme.primary}20` }}>
+                              <span style={{ fontSize: '20px' }}>📦</span>
                             </div>
                           </div>
                           <p className="text-muted mb-1 small">Total Products</p>
-                          <h3 className="mb-0 fw-bold">{stats.totalProducts}</h3>
+                          <h4 className="mb-0 fw-bold">{stats.totalProducts}</h4>
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-6 col-md-3">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start mb-3">
-                            <div className="bg-success bg-opacity-10 p-3 rounded-3">
-                              <span style={{ fontSize: '24px' }}>📊</span>
+                        <div className="card-body p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="bg-success bg-opacity-10 p-2 rounded-3">
+                              <span style={{ fontSize: '20px' }}>📊</span>
                             </div>
                           </div>
                           <p className="text-muted mb-1 small">Total Quantity</p>
-                          <h3 className="mb-0 fw-bold">{stats.totalQuantity.toLocaleString()}</h3>
+                          <h4 className="mb-0 fw-bold">{stats.totalQuantity.toLocaleString()}</h4>
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-6 col-md-3">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start mb-3">
-                            <div className="bg-danger bg-opacity-10 p-3 rounded-3">
-                              <span style={{ fontSize: '24px' }}>💰</span>
+                        <div className="card-body p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="bg-danger bg-opacity-10 p-2 rounded-3">
+                              <span style={{ fontSize: '20px' }}>💰</span>
                             </div>
                           </div>
                           <p className="text-muted mb-1 small">Total Revenue</p>
-                          <h3 className="mb-0 fw-bold">${stats.totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
+                          <h5 className="mb-0 fw-bold">${stats.totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h5>
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-3">
+                    <div className="col-6 col-md-3">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-start mb-3">
-                            <div className="bg-warning bg-opacity-10 p-3 rounded-3">
-                              <span style={{ fontSize: '24px' }}>📈</span>
+                        <div className="card-body p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="bg-warning bg-opacity-10 p-2 rounded-3">
+                              <span style={{ fontSize: '20px' }}>📈</span>
                             </div>
                           </div>
                           <p className="text-muted mb-1 small">Average Price</p>
-                          <h3 className="mb-0 fw-bold">${stats.avgPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
+                          <h5 className="mb-0 fw-bold">${stats.avgPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h5>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Charts Row */}
-                  <div className="row g-4 mb-4">
-                    {/* Top Products by Price */}
-                    <div className="col-lg-6">
+                  <div className="row g-3 g-md-4 mb-4">
+                    <div className="col-12 col-lg-6">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
+                        <div className="card-body p-3">
                           <h6 className="mb-3 fw-semibold">Top Products by Price</h6>
                           {priceChartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={250}>
                               <BarChart data={priceChartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
-                                <YAxis tick={{ fontSize: 12 }} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                                <YAxis tick={{ fontSize: 11 }} />
                                 <Tooltip formatter={(value) => `$${value}`} />
-                                <Bar dataKey="price" fill="#0d6efd" radius={[8, 8, 0, 0]} />
+                                <Bar dataKey="price" fill={currentTheme.primary} radius={[8, 8, 0, 0]} />
                               </BarChart>
                             </ResponsiveContainer>
                           ) : (
@@ -372,17 +566,16 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Stock Quantity by Product */}
-                    <div className="col-lg-6">
+                    <div className="col-12 col-lg-6">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
+                        <div className="card-body p-3">
                           <h6 className="mb-3 fw-semibold">Stock Quantity by Product</h6>
                           {quantityChartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={250}>
                               <BarChart data={quantityChartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
-                                <YAxis tick={{ fontSize: 12 }} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                                <YAxis tick={{ fontSize: 11 }} />
                                 <Tooltip />
                                 <Bar dataKey="quantity" fill="#198754" radius={[8, 8, 0, 0]} />
                               </BarChart>
@@ -396,14 +589,13 @@ export default function Dashboard() {
                   </div>
 
                   {/* Second Row of Charts */}
-                  <div className="row g-4 mb-4">
-                    {/* Product Value Distribution (Pie) */}
-                    <div className="col-lg-6">
+                  <div className="row g-3 g-md-4 mb-4">
+                    <div className="col-12 col-lg-6">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
+                        <div className="card-body p-3">
                           <h6 className="mb-3 fw-semibold">Top 5 Products by Total Value</h6>
                           {valueDistributionData.length > 0 ? (
-                            <div className="d-flex align-items-center justify-content-center">
+                            <div className="d-flex align-items-center justify-content-center flex-column flex-sm-row">
                               <ResponsiveContainer width="60%" height={220}>
                                 <PieChart>
                                   <Pie
@@ -422,7 +614,7 @@ export default function Dashboard() {
                                   <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
                                 </PieChart>
                               </ResponsiveContainer>
-                              <div className="ms-3">
+                              <div className="ms-3 mt-3 mt-sm-0">
                                 {valueDistributionData.map((item, index) => (
                                   <div key={index} className="d-flex align-items-center mb-2">
                                     <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: item.color, marginRight: '8px' }}></div>
@@ -438,17 +630,16 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Price Range Distribution */}
-                    <div className="col-lg-6">
+                    <div className="col-12 col-lg-6">
                       <div className="card border-0 shadow-sm h-100">
-                        <div className="card-body">
+                        <div className="card-body p-3">
                           <h6 className="mb-3 fw-semibold">Price Range Distribution</h6>
                           {priceRangeData.some(d => d.count > 0) ? (
                             <ResponsiveContainer width="100%" height={220}>
                               <LineChart data={priceRangeData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="range" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
+                                <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                                <YAxis tick={{ fontSize: 11 }} />
                                 <Tooltip />
                                 <Line type="monotone" dataKey="count" stroke="#6610f2" strokeWidth={3} dot={{ fill: '#6610f2', r: 5 }} />
                               </LineChart>
@@ -463,36 +654,36 @@ export default function Dashboard() {
 
                   {/* Recent Products Table */}
                   <div className="card border-0 shadow-sm">
-                    <div className="card-body">
+                    <div className="card-body p-3">
                       <h5 className="mb-3 fw-semibold">Recent Products Overview</h5>
                       {recentTransactions.length > 0 ? (
                         <div className="table-responsive">
                           <table className="table table-hover">
                             <thead className="table-light">
                               <tr>
-                                <th>Product Name</th>
-                                <th>Date Added</th>
-                                <th>Time</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Total Value</th>
-                                <th>Status</th>
+                                <th className="small">Product Name</th>
+                                <th className="small d-none d-sm-table-cell">Date Added</th>
+                                <th className="small d-none d-md-table-cell">Time</th>
+                                <th className="small">Qty</th>
+                                <th className="small">Price</th>
+                                <th className="small d-none d-lg-table-cell">Total Value</th>
+                                <th className="small">Status</th>
                               </tr>
                             </thead>
                             <tbody>
                               {recentTransactions.map((txn, index) => (
                                 <tr key={index}>
-                                  <td className="fw-semibold">{txn.product}</td>
-                                  <td className="text-muted small">{txn.date}</td>
-                                  <td className="text-muted small">{txn.time}</td>
-                                  <td>{txn.quantity}</td>
-                                  <td>${txn.price}</td>
-                                  <td className="fw-semibold">${txn.total}</td>
+                                  <td className="fw-semibold small">{txn.product}</td>
+                                  <td className="text-muted small d-none d-sm-table-cell">{txn.date}</td>
+                                  <td className="text-muted small d-none d-md-table-cell">{txn.time}</td>
+                                  <td className="small">{txn.quantity}</td>
+                                  <td className="small">${txn.price}</td>
+                                  <td className="fw-semibold small d-none d-lg-table-cell">${txn.total}</td>
                                   <td>
                                     <span className={`badge ${
                                       txn.status === 'In Stock' ? 'bg-success' : 
                                       txn.status === 'Low Stock' ? 'bg-warning text-dark' : 'bg-danger'
-                                    }`}>
+                                    }`} style={{ fontSize: '10px' }}>
                                       {txn.status}
                                     </span>
                                   </td>
@@ -510,25 +701,26 @@ export default function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="p-4">
+            <div className="p-3 p-md-4">
               {/* Products Section */}
               <div className="card border-0 shadow-sm mb-4">
-                <div className="card-body">
-                  <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="card-body p-3">
+                  <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h4 className="mb-0 fw-bold">Products Management</h4>
                     <button
                       onClick={() => {
                         setShowForm(true);
                         setSelectedProduct(null);
                       }}
-                      className="btn btn-primary"
+                      className="btn btn-sm btn-md-regular"
+                      style={{ backgroundColor: currentTheme.primary, color: 'white', border: 'none' }}
                     >
                       ➕ Add Product
                     </button>
                   </div>
 
-                  <div className="row g-3 mb-4">
-                    <div className="col-md-8">
+                  <div className="row g-2 g-md-3 mb-4">
+                    <div className="col-12 col-md-8">
                       <input
                         type="text"
                         className="form-control"
@@ -537,7 +729,7 @@ export default function Dashboard() {
                         onChange={e => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-12 col-md-4">
                       <select
                         className="form-select"
                         value={sortBy}
@@ -561,13 +753,13 @@ export default function Dashboard() {
                       <table className="table table-hover">
                         <thead className="table-light">
                           <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Price ($)</th>
-                            <th>Quantity</th>
-                            <th>Total Value</th>
-                            <th>Actions</th>
+                            <th className="small">#</th>
+                            <th className="small">Name</th>
+                            <th className="small d-none d-md-table-cell">Description</th>
+                            <th className="small">Price ($)</th>
+                            <th className="small">Qty</th>
+                            <th className="small d-none d-lg-table-cell">Total Value</th>
+                            <th className="small">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -580,36 +772,36 @@ export default function Dashboard() {
                           ) : (
                             filteredProducts.map((p, index) => (
                               <tr key={p._id || index}>
-                                <td>{index + 1}</td>
-                                <td className="fw-semibold">{p.name || 'N/A'}</td>
-                                <td className="text-muted">{p.description || 'N/A'}</td>
-                                <td>${p.price || '0'}</td>
+                                <td className="small">{index + 1}</td>
+                                <td className="fw-semibold small">{p.name || 'N/A'}</td>
+                                <td className="text-muted small d-none d-md-table-cell">{p.description || 'N/A'}</td>
+                                <td className="small">${p.price || '0'}</td>
                                 <td>
                                   <span className={`badge ${
                                     parseInt(p.quantity) > 10 ? 'bg-success' : 
                                     parseInt(p.quantity) > 0 ? 'bg-warning text-dark' : 'bg-danger'
-                                  }`}>
+                                  }`} style={{ fontSize: '10px' }}>
                                     {p.quantity || '0'}
                                   </span>
                                 </td>
-                                <td className="fw-semibold">
+                                <td className="fw-semibold small d-none d-lg-table-cell">
                                   ${((parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0)).toFixed(2)}
                                 </td>
                                 <td>
                                   <button
-                                    className="btn btn-sm btn-warning me-2"
+                                    className="btn btn-sm btn-warning me-1"
                                     onClick={() => {
                                       setSelectedProduct(p);
                                       setShowForm(true);
                                     }}
                                   >
-                                    Edit
+                                    ✏️
                                   </button>
                                   <button
                                     className="btn btn-sm btn-danger"
                                     onClick={() => handleDelete(p._id)}
                                   >
-                                    Delete
+                                    🗑️
                                   </button>
                                 </td>
                               </tr>
@@ -633,6 +825,7 @@ export default function Dashboard() {
           onCancel={() => setShowForm(false)}
           onSubmit={selectedProduct ? handleUpdate : handleCreate}
           loading={formLoading}
+          themeColor={currentTheme.primary}
         />
       )}
 
@@ -650,7 +843,7 @@ export default function Dashboard() {
   );
 }
 
-function ProductForm({ product, onSubmit, onCancel, loading }) {
+function ProductForm({ product, onSubmit, onCancel, loading, themeColor }) {
   const [form, setForm] = useState({
     name: product?.name || '',
     description: product?.description || '',
@@ -728,7 +921,12 @@ function ProductForm({ product, onSubmit, onCancel, loading }) {
               <button type="button" className="btn btn-secondary" onClick={onCancel}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button 
+                type="submit" 
+                className="btn text-white" 
+                style={{ backgroundColor: themeColor, border: 'none' }}
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
