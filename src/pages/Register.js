@@ -30,7 +30,7 @@ export default function RegisterWithNav() {
     }
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:3001/auth/signup", form);
+      const res = await axios.post("https://node-backend-nu-eight.vercel.app/auth/signup", form);
       setMessage("✅ " + (res.data.message || "Registration successful!"));
       setMessageType("success");
       setForm({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });

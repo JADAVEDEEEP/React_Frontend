@@ -6,8 +6,9 @@ import * as THREE from "three";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const API_PRODUCTS = "http://localhost:3001/api/allproducts";
-const API_SELLERS = "http://localhost:3001/auth/getusers";
+const API_PRODUCTS = "https://node-backend-nu-eight.vercel.app/api/allproducts";
+
+const API_SELLERS = "https://node-backend-nu-eight.vercel.app/auth/getusers";
 
 export default function HomePage() {
   const navigate = useNavigate();

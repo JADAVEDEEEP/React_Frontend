@@ -23,7 +23,7 @@ export default function LoginWithNav() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:3001/auth/login", form);
+      const res = await axios.post("https://node-backend-nu-eight.vercel.app/auth/login", form);
 
       setSuccessMsg(res.data.message || "Login successful!");
 

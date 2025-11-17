@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const API_URL = process.env.REACT_APP_API_PRODUCT_URL || "http://localhost:3001/api";
+const API_URL =  "https://node-backend-nu-eight.vercel.app/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
