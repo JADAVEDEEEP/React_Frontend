@@ -4,7 +4,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const API_URL = "http://localhost:3001/api" || "https://react-frontend-vakw.vercel.app";
+const API_URL = import.meta.env.VITE_API_PRODUCT_URL;
+
 
 export default function Dashboard() {
   const navigate = useNavigate();

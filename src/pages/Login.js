@@ -1,4 +1,3 @@
-// LoginWithNav.jsx
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -6,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function LoginWithNav() {
   const navigate = useNavigate();
-  const [theme, setTheme] = useState("A"); // A | B | C
+  const [theme, setTheme] = useState("A");
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
@@ -22,27 +21,37 @@ export default function LoginWithNav() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const AUTH_URL = import.meta.env.VITE_API_AUTH_URL;
+
     try {
-      const res = await axios.post("http://localhost:3001/auth/login", form);
+      const res = await axios.post(`${AUTH_URL}/login`, form);
 
       setSuccessMsg(res.data.message || "Login successful!");
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userId", res.data.user.userId);
       localStorage.setItem("userEmail", res.data.user.email);
-      localStorage.setItem("userName", `${res.data.user.firstName} ${res.data.user.lastName}`);
+      localStorage.setItem(
+        "userName",
+        `${res.data.user.firstName} ${res.data.user.lastName}`
+      );
 
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || "Login failed. Please check your credentials.");
+      setErrorMsg(
+        err.response?.data?.message ||
+          "Login failed. Please check your credentials."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Inline CSS for navbar & form
+  // Inline CSS setup
   useEffect(() => {
     if (document.getElementById("pp-embedded-css-login")) return;
+
     const css = `
       :root { --accent-A: #667eea; --accent-B: #ffd166; --accent-C: #c59b2b; }
       .hp-root { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; min-height:100vh; background: #f7f7fb; display:flex; flex-direction:column; }
@@ -97,7 +106,11 @@ export default function LoginWithNav() {
               {["A","B","C"].map((t) => (
                 <button
                   key={t}
-                  className={`btn btn-sm me-1 ${theme === t ? "btn-primary" : t==="B" ? "btn-outline-warning": t==="C"? "btn-outline-dark":"btn-outline-primary"}`}
+                  className={`btn btn-sm me-1 ${
+                    theme === t ? "btn-primary" :
+                    t==="B" ? "btn-outline-warning":
+                    t==="C"? "btn-outline-dark":"btn-outline-primary"
+                  }`}
                   onClick={() => setTheme(t)}
                 >{t}</button>
               ))}
@@ -112,8 +125,12 @@ export default function LoginWithNav() {
       {/* LOGIN FORM */}
       <div className="login-card-wrap">
         <div className="login-card">
-          <h2 className="text-center mb-3 fw-bold" style={{ color: "#0b1220" }}>Welcome Back!</h2>
-          <p className="text-center mb-4" style={{ color: "#6b7280", fontSize: 14 }}>Login to your seller account</p>
+          <h2 className="text-center mb-3 fw-bold" style={{ color: "#0b1220" }}>
+            Welcome Back!
+          </h2>
+          <p className="text-center mb-4" style={{ color: "#6b7280", fontSize: 14 }}>
+            Login to your seller account
+          </p>
 
           {errorMsg && <div className="alert alert-danger text-center">{errorMsg}</div>}
           {successMsg && <div className="alert alert-success text-center">{successMsg}</div>}
@@ -152,7 +169,10 @@ export default function LoginWithNav() {
           </form>
 
           <p className="text-center mt-3" style={{ color: "#6b7280", fontSize: 14 }}>
-            Don’t have an account? <a href="/register" style={{ color: accent, fontWeight: 700 }}>Register here</a>
+            Don’t have an account?{" "}
+            <a href="/register" style={{ color: accent, fontWeight: 700 }}>
+              Register here
+            </a>
           </p>
         </div>
       </div>
