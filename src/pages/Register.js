@@ -1,12 +1,11 @@
-// RegisterWithNav.jsx
+// RegisterPlayboy.jsx
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-export default function RegisterWithNav() {
+export default function RegisterPlayboy() {
   const navigate = useNavigate();
-  const [theme, setTheme] = useState("A"); // A | B | C
 
   const [form, setForm] = useState({
     firstName: "",
@@ -15,144 +14,321 @@ export default function RegisterWithNav() {
     password: "",
     confirmPassword: "",
   });
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // success | danger
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState("");
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (form.password !== form.confirmPassword) {
-      setMessage("❌ Passwords do not match");
-      setMessageType("danger");
+      setMsg("Passwords do not match");
+      setMsgType("danger");
       return;
     }
+
     try {
       setLoading(true);
-      const res = await axios.post("https://node-backend-nu-eight.vercel.app/auth/signup", form);
-      setMessage("✅ " + (res.data.message || "Registration successful!"));
-      setMessageType("success");
-      setForm({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });
+
+      const res = await axios.post(
+        "https://node-backend-nu-eight.vercel.app/auth/signup",
+        form
+      );
+
+      setMsg(res.data.message);
+      setMsgType("success");
+
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch (err) {
-      setMessage("❌ " + (err.response?.data?.message || "Registration failed!"));
-      setMessageType("danger");
-    } finally {
-      setLoading(false);
+      setMsg(err.response?.data?.message || "Registration failed");
+      setMsgType("danger");
     }
+
+    setLoading(false);
   };
 
-  // Inline CSS for navbar & form
-  useEffect(() => {
-    if (document.getElementById("pp-embedded-css")) return;
-    const css = `
-      :root { --accent-A: #667eea; --accent-B: #ffd166; --accent-C: #c59b2b; }
-      .hp-root { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; min-height:100vh; background: #f7f7fb; }
-      .hp-header { padding: 14px 18px; background: transparent; }
-      .hp-brand { display:flex; gap:10px; align-items:center; font-weight:800; }
-      .hp-badge { font-size:12px; padding:6px 10px; border-radius:999px; background: rgba(0,0,0,0.06); }
-      .hp-nav .nav-link { color: rgba(15,23,42,0.8); margin-right:12px; font-weight:600; }
-      .register-card-wrap { display:flex; justify-content:center; padding-top:40px; padding-bottom:40px; }
-      .register-card { width:100%; max-width:400px; border-radius:14px; background:#fff; box-shadow:0 20px 45px rgba(10,10,30,0.08); padding:28px; }
-      .form-input { border-radius:999px; padding:10px 15px; border:1px solid #e6e9ef; transition:box-shadow .18s, border-color .18s; }
-      .form-input:focus { box-shadow:0 6px 22px rgba(102,126,234,0.12); border-color: rgba(102,126,234,0.28); outline:none; }
-      .seller-btn { border-radius:999px; padding:12px; font-weight:700; }
-      @media (max-width:767px) {
-        .hp-nav.d-none.d-md-flex { display:none !important; }
-        .hp-header { padding:12px; }
-        .register-card { padding:20px; margin: 18px; }
-      }
-    `;
-    const style = document.createElement("style");
-    style.id = "pp-embedded-css";
-    style.innerHTML = css;
-    document.head.appendChild(style);
-  }, []);
-
-  const accentColorMap = { A: "#667eea", B: "#ffd166", C: "#c59b2b" };
-  const accent = accentColorMap[theme] || accentColorMap.A;
-
   return (
-    <div className="hp-root">
-      {/* NAVBAR */}
-      <div className="hp-header">
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center gap-3">
-            <div className="hp-brand">
-              <span style={{ fontSize: 22 }}>🛍️</span>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: 18 }}>Trendzz</div>
-                <div className="hp-badge">Seller Dashboard</div>
-              </div>
-            </div>
-          </div>
+    <div
+      style={{
+        fontFamily: "Poppins, sans-serif",
+        background: "#f7f7fc",
+        padding: "40px 0",
+        minHeight: "100vh",
+      }}
+    >
 
-          <div className="d-flex align-items-center">
-            <nav className="hp-nav d-none d-md-flex">
-              <a className="nav-link" href="/">Home</a>
-              <a className="nav-link" href="/collection">Collection</a>
-              <a className="nav-link" href="/shop">Shop</a>
-              <a className="nav-link" href="/about">About</a>
-            </nav>
+      {/* PLAYBOY LOGO */}
+      <div
+        logo-wrapper="true"
+        style={{
+          width: "100%",
+          display: "flex",
+          flexWrap: "nowrap",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          gap: "10px",
+          paddingLeft: "20px",
+          marginBottom: "25px",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/")}
+      >
+        <div
+          className="logo-icon"
+          style={{
+            width: "42px",
+            height: "42px",
+            minWidth: "42px",
+            background: "linear-gradient(135deg, #ff6b35, #e85a28)",
+            borderRadius: "12px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "20px",
+            boxShadow: "0 4px 16px rgba(255,107,53,0.4)",
+          }}
+        >
+          🛍️
+        </div>
 
-            {/* THEME BUTTONS */}
-            <div className="d-flex align-items-center ms-3 me-2">
-              {["A","B","C"].map((t) => (
-                <button
-                  key={t}
-                  className={`btn btn-sm me-1 ${theme === t ? "btn-primary" : t==="B" ? "btn-outline-warning": t==="C"? "btn-outline-dark":"btn-outline-primary"}`}
-                  onClick={() => setTheme(t)}
-                >{t}</button>
-              ))}
-            </div>
-
-            <button className="btn btn-outline-secondary me-2" onClick={() => navigate("/login")}>Login</button>
-            <button className="btn btn-dark" onClick={() => navigate("/register")}>Register</button>
-          </div>
+        <div
+          className="logo-text"
+          style={{
+            fontSize: "1.45rem",
+            fontWeight: "800",
+            background: "linear-gradient(135deg, #ff6b35, #004e89)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            whiteSpace: "nowrap",
+          }}
+        >
+          PlayBoy
         </div>
       </div>
 
-      {/* REGISTER FORM */}
-      <div className="register-card-wrap">
-        <div className="register-card">
-          <h3 style={{ marginBottom: 15, fontWeight: 800, color: "#0b1220" }}>Become a Trendzz Seller</h3>
-          <p style={{ color: "#6b7280", marginBottom: 20, fontSize: 14 }}>Create your seller account to start selling</p>
+      {/* LOGO MEDIA QUERY */}
+      <style>{`
+        @media (max-width: 480px) {
+          [logo-wrapper] .logo-icon {
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 15px !important;
+          }
 
-          {message && <div className={`alert alert-${messageType} text-center`}>{message}</div>}
+          [logo-wrapper] .logo-text {
+            font-size: 1.25rem !important;
+          }
+             .login-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 0%;
+    height: 2px;
+    background: linear-gradient(135deg, #6a5af9, #4a3cf0);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+  }
 
-          <form onSubmit={handleSubmit}>
-            <div className="row g-2 mb-3">
-              <div className="col-md-6">
-                <input name="firstName" className="form-control form-input" value={form.firstName} onChange={handleChange} placeholder="First Name" required />
+  .login-link:hover::after {
+    width: 100%;
+  }
+        }
+      `}</style>
+
+      <div className="container">
+        <div className="row g-5">
+
+          {/* LEFT SIDE FORM */}
+          <div className="col-lg-6">
+            <h2 style={{ fontWeight: 700 }}>Welcome to Playboy</h2>
+            <p style={{ color: "#555", marginBottom: 30 }}>
+              Create your seller account to start selling
+            </p>
+
+            {msg && (
+              <div className={`alert alert-${msgType} text-center`}>
+                {msg}
               </div>
-              <div className="col-md-6">
-                <input name="lastName" className="form-control form-input" value={form.lastName} onChange={handleChange} placeholder="Last Name" required />
+            )}
+
+            <form onSubmit={handleSubmit} className="fadeInUp">
+              <div className="row mb-3">
+                <div className="col-md-6 mb-3">
+                  <input
+                    name="firstName"
+                    className="form-control shadow-sm"
+                    style={inputStyle}
+                    placeholder="First Name"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6 mb-3">
+                  <input
+                    name="lastName"
+                    className="form-control shadow-sm"
+                    style={inputStyle}
+                    placeholder="Last Name"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="mb-3">
-              <input type="email" name="email" className="form-control form-input" value={form.email} onChange={handleChange} placeholder="Email" required />
-            </div>
+              <input
+                type="email"
+                name="email"
+                className="form-control shadow-sm mb-3"
+                style={inputStyle}
+                placeholder="Email Address"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
 
-            <div className="row g-2 mb-3">
-              <div className="col-md-6">
-                <input type="password" name="password" className="form-control form-input" value={form.password} onChange={handleChange} placeholder="Password" required />
-              </div>
-              <div className="col-md-6">
-                <input type="password" name="confirmPassword" className="form-control form-input" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm Password" required />
-              </div>
-            </div>
+              <input
+                type="password"
+                name="password"
+                className="form-control shadow-sm mb-3"
+                style={inputStyle}
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
 
-            <button type="submit" className="btn seller-btn w-100" style={{ background: accent, color: theme==="B"?"#111":"#fff", border:"none" }} disabled={loading}>
-              {loading ? "Creating Seller Account..." : "Create Seller Account"}
-            </button>
-          </form>
+              <input
+                type="password"
+                name="confirmPassword"
+                className="form-control shadow-sm mb-4"
+                style={inputStyle}
+                placeholder="Confirm Password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                required
+              />
 
-          <p className="text-center mt-3" style={{ color: "#6b7280", fontSize: 14 }}>
-            Already have a seller account? <a href="/login" style={{ color: accent, fontWeight: 700 }}>Login here</a>
-          </p>
+              <button
+                className="btn w-100 shadow-sm"
+                style={{
+                  padding: "12px",
+                  background: "#ec6c3a",
+                  borderRadius: 8,
+                  color: "white",
+                  fontWeight: 600,
+                  fontSize: 18,
+                }}
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Create Account"}
+              </button>
+
+              <p
+  style={{
+    marginTop: 15,
+    fontSize: 14,
+    textAlign: "center",
+    color: "#555",
+  }}
+>
+  Already have an account?{" "}
+  <span
+    onClick={() => navigate("/login")}
+    style={{
+      fontWeight: 600,
+      cursor: "pointer",
+      background: "linear-gradient(135deg, #6a5af9, #4a3cf0)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      position: "relative",
+      paddingBottom: "2px",
+    }}
+    className="login-link"
+  >
+    Login
+  </span>
+</p>
+            </form>
+
+            <p className="mt-3" style={{ fontSize: 13, color: "#666" }}>
+              By clicking you agree to our <b>Terms & Conditions</b> and{" "}
+              <b>Privacy Policy</b>.
+            </p>
+          </div>
+
+          {/* RIGHT SIDE INFO — HIDDEN ON MOBILE */}
+          <div className="col-lg-6 d-none d-lg-block fadeInUp">
+            <h4 className="mb-4" style={{ fontWeight: 700 }}>
+              Grow your business faster by selling on Playboy
+            </h4>
+
+            <Feature icon="👥" title="1 lakh+" desc="Suppliers are selling commission-free" />
+            <Feature icon="📍" title="19000+" desc="Pincodes supported for delivery" />
+            <Feature icon="🗺️" title="Crores" desc="Customers buying across India" />
+            <Feature icon="📦" title="700+" desc="Categories to sell" />
+
+            <hr className="my-4" />
+
+            <h4 style={{ fontWeight: 700 }}>All you need to sell on Playboy:</h4>
+
+            <Feature icon="✔️" title="Tax Details" />
+            <Feature icon="✔️" title="GSTIN / UIN" />
+            <Feature icon="✔️" title="Bank Account" />
+          </div>
+
         </div>
       </div>
     </div>
   );
 }
+
+/* COMPONENT FOR SIDEBAR FEATURES */
+function Feature({ icon, title, desc }) {
+  return (
+    <div className="d-flex align-items-start mb-3">
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          background: "#efe9ff",
+          color: "#7a4de6",
+          fontSize: 20,
+          borderRadius: 10,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          marginRight: 12,
+        }}
+      >
+        {icon}
+      </div>
+
+      <div>
+        <div style={{ fontWeight: 600 }}>{title}</div>
+        {desc && <div style={{ color: "#666", fontSize: 14 }}>{desc}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* INPUT STYLE */
+const inputStyle = {
+  borderRadius: 10,
+  padding: "14px",
+  border: "1px solid #ddd",
+  fontSize: 15,
+};
