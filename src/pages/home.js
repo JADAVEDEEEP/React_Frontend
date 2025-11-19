@@ -25,21 +25,46 @@ export default function HomePage() {
   useEffect(() => {
     const css = `
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;700;900&display=swap');
-
 :root {
-  --primary: #ff6b35;
-  --primary-dark: #e85a28;
-  --secondary: #004e89;
-  --accent: #f7b801;
-  --bg-light: #fafafa;
-  --bg-white: #ffffff;
-  --text-dark: #1a1a1a;
-  --text-gray: #6b7280;
-  --border: #e5e7eb;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.16);
+  /* Brand – Soft professional tone */
+  --primary: #4A5568;         /* Soft dark gray with slight blue tone */
+  --primary-light: #EDF2F7;   /* Very light grayish-blue */
+  --primary-dark: #2D3748;    /* Deeper professional gray */
+
+  /* Secondary – subtle blue for highlights */
+  --secondary: #3B82F6; 
+  --secondary-light: #E8F0FE;
+
+  /* Accents – minimal and muted */
+  --accent: #F59E0B;         /* Soft warm accent */
+  --accent-light: #FEF3C7;
+
+  /* Backgrounds */
+  --bg-white: #FFFFFF;
+  --bg-light: #F7F7F8;       /* Dashboard clean background */
+  --bg-gray: #F0F0F1;        /* Slightly darker section background */
+
+  /* Text */
+  --text-dark: #1A1A1A;
+  --text-medium: #4B4B4B;
+  --text-light: #6F6F6F;
+
+  /* Borders */
+  --border: #E5E5E5;
+  --border-dark: #D4D4D4;
+
+  /* Status colors */
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
+
+  /* Shadows – very minimal */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+
+  /* Radius */
+  --radius: 8px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,18 +84,30 @@ body {
 /* ========== ANIMATED NAVBAR ========== */
 .navbar-wrapper {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 20px;              /* move navbar a little down */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;             /* navbar not full width → looks premium */
+  border-radius: 20px;    /* rounded corners */
+  background: rgba(148, 135, 135, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+  transition: all 0.35s ease;
   z-index: 1000;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+
 .navbar-wrapper.scrolled {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px); 
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;     /* slightly smaller radius when stuck */
+  box-shadow: 0 8px 35px rgba(0,0,0,0.12);
+  top: 10px;               /* moves up a bit on scroll */
+  width: 94%;              /* slightly expand when sticky */
 }
+
 
 .navbar {
   max-width: 1400px;
@@ -1217,7 +1254,7 @@ body {
           <div className="nav-brand" onClick={() => navigate("/")}>
             <div className="nav-logo">🛍️</div>
             <div>
-              <div className="nav-title">PlayBoy</div>
+              <div className="nav-title">Lavish</div>
             </div>
           </div>
 
@@ -1272,7 +1309,7 @@ body {
           <div className="nav-brand">
             <div className="nav-logo">🛍️</div>
             <div>
-              <div className="nav-title">Trendzz</div>
+              <div className="nav-title">Lavish</div>
             </div>
           </div>
           <button
@@ -1604,7 +1641,7 @@ body {
           <div className="footer-brand">
             <div className="footer-logo">
               <div className="footer-logo-icon">🛍️</div>
-              <div className="footer-title">PlayBoy</div>
+              <div className="footer-title">Lavish</div>
             </div>
             <p className="footer-desc">
               Your trusted marketplace for premium home & lifestyle products.
@@ -1652,7 +1689,7 @@ body {
             <h4>Contact</h4>
             <div className="footer-links">
               <div style={{ color: "rgba(255,255,255,0.8)" }}>
-                📧 support@PlayBoy.com
+                📧 support@Lavish.com
               </div>
               <div style={{ color: "rgba(255,255,255,0.8)", marginTop: "0.5rem" }}>
                 📞 +91 98765 43210
@@ -1665,7 +1702,7 @@ body {
         </div>
 
         <div className="footer-bottom">
-          <p>©  PlayBoy. All rights reserved. Made with ❤️ in India</p>
+          <p>©  Lavish. All rights reserved. Made with ❤️ in India</p>
         </div>
       </footer>
     </div>

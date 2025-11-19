@@ -62,58 +62,34 @@ export default function LoginWithNav() {
         minHeight: "100vh",
       }}
     >
-
-      {/* PLAYBOY LOGO (RESPONSIVE + CLEAN) */}
-      <div
-        logo-wrapper="true"
-        style={{
-          width: "100%",
-          display: "flex",
-          flexWrap: "nowrap",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: "10px",
-          paddingLeft: "20px",
-          marginBottom: "25px",
-          cursor: "pointer",
-        }}
-        onClick={() => navigate("/")}
-      >
-        <div
-          className="logo-icon"
-          style={{
-            width: "42px",
-            height: "42px",
-            minWidth: "42px",
-            background: "linear-gradient(135deg, #ff6b35, #e85a28)",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "20px",
-            boxShadow: "0 4px 16px rgba(255,107,53,0.4)",
-          }}
-        >
-          🛍️
-        </div>
-
-        <div
-          className="logo-text"
-          style={{
-            fontSize: "1.45rem",
-            fontWeight: "800",
-            background: "linear-gradient(135deg, #ff6b35, #004e89)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            whiteSpace: "nowrap",
-          }}
-        >
-          PlayBoy
-        </div>
-      </div>
-
-      {/* LOGO MEDIA QUERY */}
+      {/* GLOBAL STYLES */}
       <style>{`
+        .register-link {
+          font-weight: 600;
+          cursor: pointer;
+          background: linear-gradient(135deg, #7a88a0ff, #1e3356ff);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          padding-bottom: 2px;
+          position: relative;
+        }
+
+        .register-link::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          bottom: -1px;
+          width: 0%;
+          height: 2px;
+          background: linear-gradient(135deg, #7a88a0ff, #1e3356ff);
+          transition: width 0.3s ease;
+          border-radius: 2px;
+        }
+
+        .register-link:hover::after {
+          width: 100%;
+        }
+
         @media (max-width: 480px) {
           [logo-wrapper] .logo-icon {
             width: 35px !important;
@@ -127,10 +103,58 @@ export default function LoginWithNav() {
         }
       `}</style>
 
+      {/* LOGO */}
+      <div
+        logo-wrapper="true"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          paddingLeft: "20px",
+          marginBottom: "25px",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/")}
+      >
+        <div
+          className="logo-icon"
+          style={{
+            width: "42px",
+            height: "42px",
+            minWidth: "42px",
+            background: "linear-gradient(135deg, #7a88a0ff, #1e3356ff)",
+            borderRadius: "12px",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "20px",
+            color: "#fff",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.20)",
+          }}
+        >
+          🛍️
+        </div>
+
+        <div
+          className="logo-text"
+          style={{
+            fontSize: "1.45rem",
+            fontWeight: "800",
+            background: "linear-gradient(135deg, #7a88a0ff, #1e3356ff)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          Lavish
+        </div>
+      </div>
+
       <div className="container">
         <div className="row g-5">
-
-          {/* LEFT COLUMN — FORM */}
+          {/* LEFT SIDE FORM */}
           <div className="col-lg-6">
             <h2 style={{ fontWeight: 700 }}>Welcome Back</h2>
             <p style={{ color: "#555", marginBottom: 30 }}>
@@ -138,13 +162,10 @@ export default function LoginWithNav() {
             </p>
 
             {msg && (
-              <div className={`alert alert-${msgType} text-center`}>
-                {msg}
-              </div>
+              <div className={`alert alert-${msgType} text-center`}>{msg}</div>
             )}
 
             <form onSubmit={handleSubmit} className="fadeInUp">
-
               <input
                 type="email"
                 name="email"
@@ -171,7 +192,7 @@ export default function LoginWithNav() {
                 className="btn w-100 shadow-sm"
                 style={{
                   padding: "12px",
-                  background: "#ff6b35",
+                  background: "linear-gradient(135deg, #7a88a0ff, #1e3356ff)",
                   borderRadius: 8,
                   color: "white",
                   fontWeight: 600,
@@ -182,43 +203,94 @@ export default function LoginWithNav() {
                 {loading ? "Logging in..." : "Login"}
               </button>
 
-             <p
-  style={{
-    marginTop: "15px",
-    fontSize: "14px",
-    textAlign: "center",
-    color: "#555",
-  }}
->
-  Don’t have an account?{" "}
-  <span
-    onClick={() => navigate("/register")}
-    style={{
-      color: "#371e71",
-      fontWeight: 600,
-      cursor: "pointer",
-      transition: "color 0.3s ease, text-decoration 0.3s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.color = "#5e32ff";
-      e.target.style.textDecoration = "underline";
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.color = "#371e71";
-      e.target.style.textDecoration = "none";
-    }}
-  >
-    Register
-  </span>
-</p>
+              {/* REGISTER LINK */}
+              <p
+                style={{
+                  marginTop: "15px",
+                  fontSize: "14px",
+                  textAlign: "center",
+                  color: "#555",
+                }}
+              >
+                Don’t have an account?{" "}
+                <span
+                  onClick={() => navigate("/register")}
+                  className="register-link"
+                >
+                  Register
+                </span>
+              </p>
 
+              {/* SOCIAL LOGIN BUTTONS */}
+              <div style={{ marginTop: 25 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    marginBottom: 15,
+                    justifyContent: "center",
+                  }}
+                >
+                  {/* GOOGLE */}
+                  <button
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "10px 15px",
+                      borderRadius: 8,
+                      border: "1px solid #ddd",
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    <img
+                      src="https://www.svgrepo.com/show/355037/google.svg"
+                      alt="google"
+                      style={{ width: 18 }}
+                    />
+                    Google
+                  </button>
+
+                  {/* FACEBOOK */}
+                  <button
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      padding: "10px 15px",
+                      borderRadius: 8,
+                      border: "1px solid #ddd",
+                      background: "#fff",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    <img
+                      src="https://www.svgrepo.com/show/448224/facebook.svg"
+                      alt="facebook"
+                      style={{ width: 18 }}
+                    />
+                    Facebook
+                  </button>
+                </div>
+              </div>
             </form>
           </div>
 
-          {/* RIGHT COLUMN — HIDDEN ON MOBILE */}
+          {/* RIGHT COLUMN */}
           <div className="col-lg-6 d-none d-lg-block fadeInUp">
             <h4 className="mb-4" style={{ fontWeight: 700 }}>
-              Why join Playboy Seller?
+              Why join Lavish Seller?
             </h4>
 
             <Feature icon="🚀" title="Fast Growth" desc="Grow your business quickly" />
@@ -234,13 +306,13 @@ export default function LoginWithNav() {
             <Feature icon="✔️" title="Low Returns" />
             <Feature icon="✔️" title="Nationwide Reach" />
           </div>
-
         </div>
       </div>
     </div>
   );
 }
 
+/* Feature Component */
 function Feature({ icon, title, desc }) {
   return (
     <div className="d-flex align-items-start mb-3">
@@ -249,7 +321,7 @@ function Feature({ icon, title, desc }) {
           width: 40,
           height: 40,
           background: "#ffe4d6",
-          color: "#2a16c1ff",
+          color: "#2a16c1",
           fontSize: 20,
           borderRadius: 10,
           display: "flex",
@@ -269,6 +341,7 @@ function Feature({ icon, title, desc }) {
   );
 }
 
+/* Input Style */
 const inputStyle = {
   borderRadius: 10,
   padding: "14px",
