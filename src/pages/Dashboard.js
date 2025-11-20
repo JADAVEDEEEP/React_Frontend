@@ -1,6 +1,4 @@
-// Dashboard.jsx
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import {
@@ -21,10 +19,7 @@ import {
 const API_URL = "https://node-backend-nu-eight.vercel.app/api";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
-  // state
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState({ name: "John Doe", email: "john@example.com", id: "12345" });
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +34,8 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [productDetail, setProductDetail] = useState(null); // product detail modal
-  const [animateTrigger, setAnimateTrigger] = useState(0); // to re-trigger counters when data updates
+  const [productDetail, setProductDetail] = useState(null);
+  const [animateTrigger, setAnimateTrigger] = useState(0);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -50,58 +45,61 @@ export default function Dashboard() {
     });
   }, [token]);
 
-  // toast helper
   const showToast = useCallback((message, type) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // fetch products
   const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(API_URL);
+  try {
+    setLoading(true);
 
-      let productsArray = [];
-      if (res.data && res.data.data) {
-        productsArray = Array.isArray(res.data.data) ? res.data.data : [res.data.data];
-      } else if (Array.isArray(res.data)) {
-        productsArray = res.data;
-      }
+    const res = await axiosInstance.get(API_URL);
+    console.log("API Response:", res.data);
 
-      const validProducts = productsArray.filter((p) => p && typeof p === "object");
-
-      setProducts(validProducts);
-      setFilteredProducts(validProducts);
-      setAnimateTrigger((s) => s + 1);
-    } catch (err) {
-      showToast("Failed to load products", "error");
-      console.error(err.response?.data || err.message);
-    } finally {
-      setLoading(false);
+    // 🔥 Check backend success
+    if (res.data.success !== true) {
+      showToast(res.data.message || "Failed to load products", "error");
+      setProducts([]);
+      setFilteredProducts([]);
+      return;
     }
-  }, [axiosInstance, showToast]);
 
-  // initial load - user + data
+    // 🔥 Extract products
+    const productsArray = Array.isArray(res.data.data)
+      ? res.data.data
+      : [res.data.data];
+
+    setProducts(productsArray);
+    setFilteredProducts(productsArray);
+
+    // 🔥 Show backend message or default
+    showToast(res.data.message || `Loaded ${productsArray.length} products`, "success");
+
+  } catch (err) {
+    console.error("Fetch error:", err);
+    showToast("Server error while loading products", "error");
+    setProducts([]);
+    setFilteredProducts([]);
+  } finally {
+    setLoading(false);
+  }
+}, [axiosInstance, showToast]);
+
+
   useEffect(() => {
+    // Load user data from localStorage if available
     if (typeof window !== "undefined") {
       const userId = localStorage.getItem("userId");
       const userEmail = localStorage.getItem("userEmail");
       const userName = localStorage.getItem("userName");
-      const userJoined = localStorage.getItem("userJoined") || null;
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      setUser({ id: userId, name: userName, email: userEmail, joined: userJoined });
-      fetchProducts();
+      
+      if (userName) setUser({ name: userName, email: userEmail || "john@example.com", id: userId || "12345" });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    
+    fetchProducts();
+  }, [fetchProducts]);
 
-  // filter & sort
   useEffect(() => {
     let filtered = products.filter((p) => p && p._id);
 
@@ -118,55 +116,59 @@ export default function Dashboard() {
     setFilteredProducts(filtered);
   }, [products, searchTerm, sortBy]);
 
-  // stats
   const stats = useMemo(() => {
     const totalProducts = products.length;
     const totalRevenue = products.reduce(
-      (sum, p) => sum + ((parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0)),
+      (sum, p) => {
+        const price = parseFloat(p?.price) || 0;
+        const quantity = parseInt(p?.quantity) || 0;
+        return sum + (price * quantity);
+      },
       0
     );
-    const totalQuantity = products.reduce((sum, p) => sum + (parseInt(p.quantity) || 0), 0);
+    const totalQuantity = products.reduce((sum, p) => sum + (parseInt(p?.quantity) || 0), 0);
     const avgPrice =
-      totalProducts > 0 ? products.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0) / totalProducts : 0;
+      totalProducts > 0 ? products.reduce((sum, p) => sum + (parseFloat(p?.price) || 0), 0) / totalProducts : 0;
 
     return { totalProducts, totalRevenue, totalQuantity, avgPrice };
   }, [products]);
 
-  // price chart data
   const priceChartData = useMemo(() => {
     return products
+      .filter(p => p && p.price !== undefined)
       .slice()
-      .sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0))
+      .sort((a, b) => (parseFloat(b?.price) || 0) - (parseFloat(a?.price) || 0))
       .slice(0, 7)
       .map((p) => ({
-        name: p.name?.substring(0, 15) || "Unknown",
-        price: parseFloat(p.price) || 0,
+        name: p?.name?.substring(0, 15) || "Unknown",
+        price: parseFloat(p?.price) || 0,
       }));
   }, [products]);
 
   const quantityChartData = useMemo(() => {
     return products
+      .filter(p => p && p.quantity !== undefined)
       .slice()
-      .sort((a, b) => (parseInt(b.quantity) || 0) - (parseInt(a.quantity) || 0))
+      .sort((a, b) => (parseInt(b?.quantity) || 0) - (parseInt(a?.quantity) || 0))
       .slice(0, 8)
       .map((p) => ({
-        name: p.name?.substring(0, 10) || "Unknown",
-        quantity: parseInt(p.quantity) || 0,
+        name: p?.name?.substring(0, 10) || "Unknown",
+        quantity: parseInt(p?.quantity) || 0,
       }));
   }, [products]);
 
   const valueDistributionData = useMemo(() => {
     const topProducts = products
+      .filter(p => p && p.price !== undefined && p.quantity !== undefined)
       .map((p) => ({
-        name: p.name || "Unknown",
-        value: (parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0),
+        name: p?.name || "Unknown",
+        value: (parseFloat(p?.price) || 0) * (parseInt(p?.quantity) || 0),
       }))
       .filter((p) => p.value > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
 
     const colors = ["#0d6efd", "#6610f2", "#6f42c1", "#d63384", "#dc3545"];
-
     return topProducts.map((item, index) => ({ ...item, color: colors[index % colors.length] }));
   }, [products]);
 
@@ -182,6 +184,7 @@ export default function Dashboard() {
     return ranges.map((r) => ({
       range: r.range,
       count: products.filter((p) => {
+        if (!p || p.price === undefined) return false;
         const price = parseFloat(p.price) || 0;
         return price >= r.min && price <= r.max;
       }).length,
@@ -189,69 +192,106 @@ export default function Dashboard() {
   }, [products]);
 
   const recentTransactions = useMemo(() => {
-    return products.slice(0, 5).map((p) => ({
-      product: p.name || "Unknown Product",
-      date: new Date(p.createdAt || Date.now()).toLocaleDateString(),
-      time: new Date(p.createdAt || Date.now()).toLocaleTimeString(),
-      quantity: p.quantity || 0,
-      price: p.price || 0,
-      total: ((parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0)).toFixed(2),
-      status: parseInt(p.quantity) > 10 ? "In Stock" : parseInt(p.quantity) > 0 ? "Low Stock" : "Out of Stock",
-      raw: p,
-    }));
+    return products
+      .filter(p => p && p._id)
+      .slice(0, 5)
+      .map((p) => ({
+        product: p?.name || "Unknown Product",
+        date: new Date(p?.createdAt || Date.now()).toLocaleDateString(),
+        time: new Date(p?.createdAt || Date.now()).toLocaleTimeString(),
+        quantity: p?.quantity || 0,
+        price: p?.price || 0,
+        total: ((parseFloat(p?.price) || 0) * (parseInt(p?.quantity) || 0)).toFixed(2),
+        status: parseInt(p?.quantity) > 10 ? "In Stock" : parseInt(p?.quantity) > 0 ? "Low Stock" : "Out of Stock",
+        raw: p,
+      }));
   }, [products]);
 
-  // CRUD handlers (keep from your original code)
   const handleCreate = async (data) => {
-    try {
-      setFormLoading(true);
-      const res = await axiosInstance.post(API_URL, data);
-      const newProduct = res.data.data ? res.data.data[0] : res.data;
-      setProducts((prev) => [newProduct, ...prev]);
-      setShowForm(false);
-      showToast("Product created successfully!", "success");
-    } catch (err) {
-      showToast("Error creating product", "error");
-      console.error(err.response?.data || err.message);
-    } finally {
-      setFormLoading(false);
-    }
-  };
+  try {
+    setFormLoading(true);
 
-  const handleUpdate = async (data) => {
-    try {
-      setFormLoading(true);
-      const res = await axiosInstance.put(`${API_URL}/${selectedProduct._id}`, data);
-      const updatedProduct = res.data.data ? res.data.data[0] : res.data;
-      setProducts((prev) => prev.map((p) => (p._id === updatedProduct._id ? updatedProduct : p)));
-      setShowForm(false);
-      setSelectedProduct(null);
-      showToast("Product updated successfully!", "success");
-    } catch (err) {
-      showToast("Error updating product", "error");
-      console.error(err.response?.data || err.message);
-    } finally {
-      setFormLoading(false);
+    const res = await axiosInstance.post(API_URL, data);
+    console.log("Create response:", res.data);
+
+    if (!res.data.success) {
+      showToast(res.data.message || "Failed to create product", "error");
+      return;
     }
-  };
+
+    const newProduct = res.data.data;
+
+    setProducts((prev) => [newProduct, ...prev]);
+    setShowForm(false);
+
+    showToast(res.data.message || "Product created", "success");
+
+  } catch (err) {
+    showToast("Error creating product", "error");
+  } finally {
+    setFormLoading(false);
+  }
+};
+
+const handleUpdate = async (data) => {
+  try {
+    setFormLoading(true);
+
+    const res = await axiosInstance.put(`${API_URL}/${selectedProduct._id}`, data);
+    console.log("Update response:", res.data);
+
+    if (!res.data.success) {
+      showToast(res.data.message || "Failed to update product", "error");
+      return;
+    }
+
+    const updatedProduct = res.data.data;
+
+    setProducts((prev) =>
+      prev.map((p) => (p._id === updatedProduct._id ? updatedProduct : p))
+    );
+
+    setShowForm(false);
+    setSelectedProduct(null);
+
+    showToast(res.data.message || "Product updated", "success");
+
+  } catch (err) {
+    showToast("Error updating product", "error");
+  } finally {
+    setFormLoading(false);
+  }
+};
 
   const handleDelete = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_URL}/${id}`);
-      setProducts((prev) => prev.filter((p) => p._id !== id));
-      showToast("Product deleted successfully!", "success");
-    } catch (err) {
-      showToast("Error deleting product", "error");
-      console.error(err.response?.data || err.message);
+  try {
+    const res = await axiosInstance.delete(`${API_URL}/${id}`);
+
+    if (!res.data.success) {
+      showToast(res.data.message || "Failed to delete", "error");
+      return;
     }
-  };
+
+    setProducts((prev) => prev.filter((p) => p._id !== id));
+
+    showToast(res.data.message || "Product deleted", "success");
+
+  } catch (err) {
+    showToast("Error deleting product", "error");
+  }
+};
+
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") localStorage.clear();
-    navigate("/login");
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+    showToast("Logged out successfully!", "success");
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 500);
   };
 
-  // Theme colors
   const themeColors = {
     A: { primary: "#0d6efd", secondary: "#6c757d", accent: "#0dcaf0" },
     B: { primary: "#ffc107", secondary: "#fd7e14", accent: "#20c997" },
@@ -259,7 +299,6 @@ export default function Dashboard() {
   };
   const currentTheme = themeColors[theme];
 
-  /* ===== animated counters (simple requestAnimationFrame) ===== */
   const useAnimatedNumber = (value, duration = 700, trigger = 0) => {
     const [display, setDisplay] = useState(0);
     const rafRef = useRef(null);
@@ -282,7 +321,6 @@ export default function Dashboard() {
 
       rafRef.current = requestAnimationFrame(step);
       return () => cancelAnimationFrame(rafRef.current);
-      // retrigger when value or trigger changes
     }, [value, duration, trigger]);
 
     return display;
@@ -293,80 +331,178 @@ export default function Dashboard() {
   const animatedTotalRevenue = useAnimatedNumber(Math.round(stats.totalRevenue), 900, animateTrigger);
   const animatedAvgPrice = useAnimatedNumber(Math.round(stats.avgPrice), 900, animateTrigger);
 
-  // open product detail modal when clicking a row
   const openProductDetail = (p) => {
     setProductDetail(p);
   };
 
-  /* =======================
-     Layout & Styles
-     ======================= */
+  const MenuItem = ({ icon, label, tab, onClick }) => (
+    <div
+      className={`sb-item ${activeTab === tab ? "active" : ""}`}
+      onClick={onClick || (() => { setActiveTab(tab); setMobileMenuOpen(false); })}
+      title={label}
+    >
+      <div className="sb-icon">{icon}</div>
+      {!sidebarCollapsed && <div className="sb-label">{label}</div>}
+    </div>
+  );
+
   return (
     <div className="d-flex" style={{ minHeight: "100vh", backgroundColor: "#f7f7fc" }}>
       <style>{`
-        /* SIDEBAR */
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow-x: hidden; }
+        
         .sidebar {
-          width: 240px;
-          transition: width 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms;
+          width: 260px;
+          transition: width 220ms cubic-bezier(.2,.9,.2,1);
           background: #fff;
           border-right: 1px solid #e9eef6;
           min-height: 100vh;
           position: sticky;
           top: 0;
           z-index: 900;
+          flex-shrink: 0;
         }
-        .sidebar.collapsed { width: 72px; }
-        .sidebar .menu {
-          padding: 18px;
-        }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar .menu { padding: 18px 12px; }
+        
         .sb-item {
-          display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; cursor:pointer;
-          transition: background 180ms, transform 160ms;
-          color:#333;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 180ms;
+          color: #333;
+          margin-bottom: 8px;
+          position: relative;
         }
-        .sb-item:hover { background: #f6f7fb; transform: translateY(-2px); }
-        .sb-item.active { background: linear-gradient(135deg, rgba(122,136,160,0.12), rgba(30,51,86,0.06)); color: ${currentTheme.primary}; }
-        .sb-icon { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        .sb-label { font-weight:600; white-space:nowrap; }
+        .sb-item:hover {
+          background: linear-gradient(135deg, #f6f7fb, #eef1f6);
+          transform: translateX(4px);
+        }
+        .sb-item.active {
+          background: linear-gradient(135deg, ${currentTheme.primary}15, ${currentTheme.primary}08);
+          color: ${currentTheme.primary};
+          font-weight: 600;
+        }
+        .sb-item.active::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 28px;
+          background: ${currentTheme.primary};
+          border-radius: 0 4px 4px 0;
+        }
+        
+        .sb-icon {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          background: #fff;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+        .sb-item.active .sb-icon {
+          background: ${currentTheme.primary}10;
+        }
+        .sb-label {
+          font-weight: 600;
+          white-space: nowrap;
+          font-size: 15px;
+        }
 
-        /* collapse button */
         .collapse-btn {
-          display:flex; align-items:center; justify-content:center;
-          width:36px; height:36px; border-radius:8px; cursor:pointer; margin: 14px;
-          background:#fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          cursor: pointer;
+          background: #f6f7fb;
+          transition: all 180ms;
+          font-size: 18px;
+          font-weight: bold;
+          color: #666;
+        }
+        .collapse-btn:hover {
+          background: ${currentTheme.primary}15;
+          color: ${currentTheme.primary};
+          transform: scale(1.05);
         }
 
-        /* header */
         .hp-header {
           background: #fff;
-          padding: 14px 18px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          padding: 16px 20px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.08);
           position: sticky;
           top: 0;
           z-index: 800;
         }
-        .hp-brand { display:flex; align-items:center; gap:10px; cursor:pointer; }
         .hp-logo {
-          width:42px; height:42px; border-radius:12px;
-          display:flex; align-items:center; justify-content:center;
-          background: linear-gradient(135deg, #7a88a0ff, #1e3356ff);
-          color: #fff; font-size: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: #fff;
+          font-size: 22px;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         .hp-name {
           font-weight: 800;
-          font-size: 1.05rem;
-          background: linear-gradient(135deg, #7a88a0ff, #1e3356ff);
+          font-size: 1.1rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
         .hp-avatar {
-          width:40px; height:40px; border-radius:50%;
-          display:flex; align-items:center; justify-content:center;
-          background:#fff; border:1px solid #eee; cursor:pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent});
+          color: #fff;
+          cursor: pointer;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+          font-weight: 700;
+          font-size: 15px;
+          transition: transform 180ms;
+        }
+        .hp-avatar:hover {
+          transform: scale(1.08);
         }
 
-        /* mobile drawer */
+        .mobile-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 1400;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.3s;
+        }
+        .mobile-overlay.open {
+          opacity: 1;
+          pointer-events: all;
+        }
+
         .mobile-drawer {
           position: fixed;
           top: 0;
@@ -375,181 +511,271 @@ export default function Dashboard() {
           height: 100vh;
           background: #fff;
           z-index: 1500;
-          transform: translateX(-110%);
-          transition: transform 0.28s ease;
-          box-shadow: 6px 0 20px rgba(0,0,0,0.08);
-          padding: 18px;
+          transform: translateX(-100%);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 6px 0 24px rgba(0,0,0,0.15);
+          padding: 20px;
+          overflow-y: auto;
         }
-        .mobile-drawer.open { transform: translateX(0); }
-        .mobile-drawer .item { padding: 10px 8px; border-radius:8px; cursor:pointer; }
-        .mobile-drawer .item:hover { background: #f6f6fb; }
+        .mobile-drawer.open {
+          transform: translateX(0);
+        }
+        .mobile-drawer .drawer-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 2px solid #f0f0f0;
+        }
+        .mobile-drawer .item {
+          padding: 14px 12px;
+          border-radius: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 6px;
+          transition: all 180ms;
+          font-size: 15px;
+        }
+        .mobile-drawer .item:hover {
+          background: #f6f7fb;
+        }
+        .mobile-drawer .item.active {
+          background: ${currentTheme.primary}15;
+          color: ${currentTheme.primary};
+          font-weight: 600;
+        }
 
-        /* main */
+        .hamburger {
+          width: 30px;
+          height: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-around;
+          cursor: pointer;
+          padding: 5px 0;
+          background: transparent;
+          border: none;
+        }
+        .hamburger span {
+          display: block;
+          height: 3px;
+          background: #333;
+          border-radius: 3px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) {
+          transform: translateY(9px) rotate(45deg);
+        }
+        .hamburger.open span:nth-child(2) {
+          opacity: 0;
+          transform: scaleX(0);
+        }
+        .hamburger.open span:nth-child(3) {
+          transform: translateY(-9px) rotate(-45deg);
+        }
+
         .main-area {
           flex: 1;
           min-height: 100vh;
-          overflow: auto;
+          overflow-x: hidden;
         }
-        .container-main { padding: 18px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .container-main {
+          padding: 20px;
+          max-width: 1400px;
+          margin: 0 auto;
+          width: 100%;
+        }
 
-        /* small animations */
-        .fade-in-up { transform: translateY(8px); opacity:0; animation: fadeUp .45s forwards; }
-        @keyframes fadeUp { to { transform:none; opacity:1; } }
+        .fade-in-up {
+          animation: fadeUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: none;
+            opacity: 1;
+          }
+        }
 
-        /* responsive: sidebar becomes top on small screens */
         @media(max-width: 991px) {
-          .sidebar { display:none; }
+          .sidebar {
+            display: none;
+          }
+          .container-main {
+            padding: 16px;
+          }
+        }
+
+        @media(max-width: 576px) {
+          .hp-header {
+            padding: 12px 16px;
+          }
+          .container-main {
+            padding: 12px;
+          }
+        }
+
+        .card {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        }
+
+        .table-hover tbody tr {
+          transition: all 0.2s;
+        }
+        .table-hover tbody tr:hover {
+          background-color: ${currentTheme.primary}08;
+          transform: scale(1.01);
+        }
+
+        .modal {
+          backdrop-filter: blur(4px);
+        }
+        .modal-content {
+          border-radius: 16px !important;
+          overflow: hidden;
         }
       `}</style>
 
-      {/* Sidebar (desktop) */}
+      {/* Desktop Sidebar */}
       <div className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`}>
-        <div style={{ display: "flex", justifyContent: sidebarCollapsed ? "center" : "space-between", alignItems: "center", padding: "14px 12px" }}>
+        <div style={{ padding: "16px 12px", marginBottom: "12px" }}>
           {!sidebarCollapsed ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => { setActiveTab("dashboard"); }}>
-              <div className="hp-logo" style={{ width: 38, height: 38, fontSize: 18 }}>🛍️</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setActiveTab("dashboard")}>
+              <div className="hp-logo" style={{ width: 42, height: 42, fontSize: 20 }}>🛍️</div>
               <div>
-                <div style={{ fontWeight: 800 }}>Lavish</div>
-                <div style={{ fontSize: 12, color: "#666" }}>Seller Dashboard</div>
+                <div style={{ fontWeight: 800, fontSize: "16px" }}>Lavish</div>
+                <div style={{ fontSize: 12, color: "#888" }}>Seller Dashboard</div>
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", justifyContent: "center", width: "100%" }} onClick={() => { setActiveTab("dashboard"); }}>
-              <div className="hp-logo" style={{ width: 38, height: 38, fontSize: 18 }}>🛍️</div>
+            <div style={{ display: "flex", justifyContent: "center", cursor: "pointer" }} onClick={() => setActiveTab("dashboard")}>
+              <div className="hp-logo" style={{ width: 42, height: 42, fontSize: 20 }}>🛍️</div>
             </div>
           )}
-
-          <div style={{ display: sidebarCollapsed ? "none" : "block" }}>
-            {/* empty for alignment */}
-          </div>
         </div>
 
         <div className="menu">
-          <div
-            className={`sb-item ${activeTab === "dashboard" ? "active" : ""}`}
-            onClick={() => setActiveTab("dashboard")}
-            title="Dashboard"
-            style={{ marginBottom: 6 }}
-          >
-            <div className="sb-icon">📊</div>
-            {!sidebarCollapsed && <div className="sb-label">Dashboard</div>}
-          </div>
+          <MenuItem icon="📊" label="Dashboard" tab="dashboard" />
+          <MenuItem icon="📦" label="Products" tab="products" />
+          <MenuItem icon="🧾" label="Orders" tab="orders" />
+          <MenuItem icon="⚙️" label="Settings" tab="settings" />
 
-          <div
-            className={`sb-item ${activeTab === "products" ? "active" : ""}`}
-            onClick={() => setActiveTab("products")}
-            title="Products"
-            style={{ marginBottom: 6 }}
-          >
-            <div className="sb-icon">📦</div>
-            {!sidebarCollapsed && <div className="sb-label">Products</div>}
-          </div>
+          <div style={{ height: 20, borderBottom: "1px solid #eee", margin: "16px 0" }} />
 
-          <div
-            className={`sb-item ${activeTab === "orders" ? "active" : ""}`}
-            onClick={() => setActiveTab("orders")}
-            title="Orders"
-            style={{ marginBottom: 6 }}
-          >
-            <div className="sb-icon">🧾</div>
-            {!sidebarCollapsed && <div className="sb-label">Orders</div>}
-          </div>
+          <MenuItem icon="🚪" label="Logout" tab="" onClick={handleLogout} />
 
-          <div
-            className={`sb-item ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => setActiveTab("settings")}
-            title="Settings"
-            style={{ marginBottom: 12 }}
-          >
-            <div className="sb-icon">⚙️</div>
-            {!sidebarCollapsed && <div className="sb-label">Settings</div>}
-          </div>
-
-          <div style={{ height: 12 }} />
-
-          <div style={{ display: "flex", alignItems: "center", justifyContent: sidebarCollapsed ? "center" : "space-between", padding: "0 12px", marginTop: 12 }}>
-            <div style={{ width: sidebarCollapsed ? "100%" : "auto", display: "flex", justifyContent: sidebarCollapsed ? "center" : "flex-start" }}>
-              <div className="sb-item" onClick={() => { handleLogout(); }}>
-                <div className="sb-icon">🚪</div>
-                {!sidebarCollapsed && <div className="sb-label">Logout</div>}
-              </div>
-            </div>
-
-            <div style={{ display: sidebarCollapsed ? "none" : "block" }}>
-              <div className="collapse-btn" title={sidebarCollapsed ? "Expand" : "Collapse"} onClick={() => setSidebarCollapsed((s) => !s)}>
-                {sidebarCollapsed ? "»" : "«"}
-              </div>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "center" }}>
+            <div className="collapse-btn" title={sidebarCollapsed ? "Expand" : "Collapse"} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
+              {sidebarCollapsed ? "»" : "«"}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Overlay */}
+      <div className={`mobile-overlay ${mobileMenuOpen ? "open" : ""}`} onClick={() => setMobileMenuOpen(false)} />
 
       {/* Mobile Drawer */}
       <div className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`}>
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div className="hp-logo" style={{ width: 38, height: 38 }}>🛍️</div>
+        <div className="drawer-header">
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div className="hp-logo" style={{ width: 42, height: 42, fontSize: 20 }}>🛍️</div>
             <div>
-              <div style={{ fontWeight: 800 }}>Lavish</div>
-              <small className="text-muted">Seller Dashboard</small>
+              <div style={{ fontWeight: 800, fontSize: "16px" }}>Lavish</div>
+              <div style={{ fontSize: 12, color: "#888" }}>Menu</div>
             </div>
           </div>
-          <button className="btn btn-link" onClick={() => setMobileMenuOpen(false)} style={{ fontSize: 20 }}>✕</button>
+          <button 
+            className="btn btn-link p-0" 
+            onClick={() => setMobileMenuOpen(false)} 
+            style={{ fontSize: 28, textDecoration: "none", color: "#333", lineHeight: 1 }}
+          >
+            ×
+          </button>
         </div>
 
-        <div style={{ marginTop: 8 }}>
-          <div className="item" onClick={() => { setActiveTab("dashboard"); setMobileMenuOpen(false); }}>📊 Dashboard</div>
-          <div className="item" onClick={() => { setActiveTab("products"); setMobileMenuOpen(false); }}>📦 Products</div>
-          <div className="item" onClick={() => { setActiveTab("orders"); setMobileMenuOpen(false); }}>🧾 Orders</div>
-          <div className="item" onClick={() => { setActiveTab("settings"); setMobileMenuOpen(false); }}>⚙️ Settings</div>
-          <div className="item text-danger" onClick={() => { setMobileMenuOpen(false); handleLogout(); }}>🚪 Logout</div>
+        <div>
+          <div className={`item ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => { setActiveTab("dashboard"); setMobileMenuOpen(false); }}>
+            <span style={{ fontSize: "20px" }}>📊</span> Dashboard
+          </div>
+          <div className={`item ${activeTab === "products" ? "active" : ""}`} onClick={() => { setActiveTab("products"); setMobileMenuOpen(false); }}>
+            <span style={{ fontSize: "20px" }}>📦</span> Products
+          </div>
+          <div className={`item ${activeTab === "orders" ? "active" : ""}`} onClick={() => { setActiveTab("orders"); setMobileMenuOpen(false); }}>
+            <span style={{ fontSize: "20px" }}>🧾</span> Orders
+          </div>
+          <div className={`item ${activeTab === "settings" ? "active" : ""}`} onClick={() => { setActiveTab("settings"); setMobileMenuOpen(false); }}>
+            <span style={{ fontSize: "20px" }}>⚙️</span> Settings
+          </div>
+          
+          <div style={{ height: 1, background: "#eee", margin: "16px 0" }} />
+          
+          <div className="item text-danger" onClick={() => { setMobileMenuOpen(false); handleLogout(); }}>
+            <span style={{ fontSize: "20px" }}>🚪</span> Logout
+          </div>
         </div>
       </div>
 
-      {/* Main area */}
-      <div className="main-area" style={{ flex: 1 }}>
+      {/* Main Area */}
+      <div className="main-area">
         {/* Header */}
         <div className="hp-header">
           <div className="d-flex align-items-center justify-content-between">
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {/* mobile menu toggle */}
-              <button className="btn btn-link d-lg-none" onClick={() => setMobileMenuOpen(true)} style={{ fontSize: 20, marginRight: 6 }}>☰</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div className="d-lg-none">
+                <button className={`hamburger ${mobileMenuOpen ? "open" : ""}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </button>
+              </div>
 
-              <div className="hp-brand" onClick={() => setActiveTab("dashboard")}>
-                <div className="hp-logo">🛍️</div>
-                <div style={{ marginLeft: 6 }}>
-                  <div className="hp-name">Lavish</div>
-                  <div style={{ fontSize: 12, color: "#666" }}>Seller Dashboard</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setActiveTab("dashboard")}>
+                
+                <div className="d-none d-sm-block">
+                 
+              
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="d-none d-sm-flex align-items-center">
-                <button className={`btn btn-sm me-1 ${theme === "A" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setTheme("A")}>A</button>
-                <button className={`btn btn-sm me-1 ${theme === "B" ? "btn-warning" : "btn-outline-warning"}`} onClick={() => setTheme("B")}>B</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div className="d-none d-md-flex align-items-center gap-1">
+                <button className={`btn btn-sm ${theme === "A" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setTheme("A")}>A</button>
+                <button className={`btn btn-sm ${theme === "B" ? "btn-warning" : "btn-outline-warning"}`} onClick={() => setTheme("B")}>B</button>
                 <button className={`btn btn-sm ${theme === "C" ? "btn-dark" : "btn-outline-dark"}`} onClick={() => setTheme("C")}>C</button>
               </div>
 
-              <div title="Profile" onClick={() => setProfileOpen(true)} style={{ marginLeft: 8 }}>
-                <div className="hp-avatar">{user.name ? user.name.split(" ").map((n) => n[0]).slice(0, 2).join("") : "U"}</div>
+              <div onClick={() => setProfileOpen(true)}>
+                <div className="hp-avatar">{user.name ? user.name.split(" ").map(n => n[0]).slice(0,2).join("") : "U"}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* content container */}
+        {/* Content */}
         <div className="container-main">
-          {activeTab === "dashboard" ? (
+          {activeTab === "dashboard" && (
             <div className="fade-in-up">
-              {/* Stats row */}
+              {/* Stats Cards */}
               <div className="row g-3 g-md-4 mb-4">
                 <div className="col-6 col-md-3">
                   <div className="card border-0 shadow-sm h-100">
                     <div className="card-body p-3">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div className="p-2 rounded-3" style={{ backgroundColor: `${currentTheme.primary}20` }}>
-                          <span style={{ fontSize: "20px" }}>📦</span>
+                          <span style={{ fontSize: "22px" }}>📦</span>
                         </div>
                       </div>
                       <p className="text-muted mb-1 small">Total Products</p>
@@ -563,7 +789,7 @@ export default function Dashboard() {
                     <div className="card-body p-3">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div className="bg-success bg-opacity-10 p-2 rounded-3">
-                          <span style={{ fontSize: "20px" }}>📊</span>
+                          <span style={{ fontSize: "22px" }}>📊</span>
                         </div>
                       </div>
                       <p className="text-muted mb-1 small">Total Quantity</p>
@@ -577,11 +803,11 @@ export default function Dashboard() {
                     <div className="card-body p-3">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div className="bg-danger bg-opacity-10 p-2 rounded-3">
-                          <span style={{ fontSize: "20px" }}>💰</span>
+                          <span style={{ fontSize: "22px" }}>💰</span>
                         </div>
                       </div>
                       <p className="text-muted mb-1 small">Total Revenue</p>
-                      <h5 className="mb-0 fw-bold">${animatedTotalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h5>
+                      <h5 className="mb-0 fw-bold">${animatedTotalRevenue.toLocaleString()}</h5>
                     </div>
                   </div>
                 </div>
@@ -591,7 +817,7 @@ export default function Dashboard() {
                     <div className="card-body p-3">
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div className="bg-warning bg-opacity-10 p-2 rounded-3">
-                          <span style={{ fontSize: "20px" }}>📈</span>
+                          <span style={{ fontSize: "22px" }}>📈</span>
                         </div>
                       </div>
                       <p className="text-muted mb-1 small">Average Price</p>
@@ -601,7 +827,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Charts */}
+              {/* Charts Row 1 */}
               <div className="row g-3 g-md-4 mb-4">
                 <div className="col-12 col-lg-6">
                   <div className="card border-0 shadow-sm h-100">
@@ -609,12 +835,12 @@ export default function Dashboard() {
                       <h6 className="mb-3 fw-semibold">Top Products by Price</h6>
                       {priceChartData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={260}>
-                          <BarChart data={priceChartData} margin={{ left: -10 }} barGap={6}>
+                          <BarChart data={priceChartData} margin={{ left: -10 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                             <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-42} textAnchor="end" height={70} />
                             <YAxis tick={{ fontSize: 11 }} />
-                            <Tooltip formatter={(value) => `$${value}`} />
-                            <Bar dataKey="price" fill={currentTheme.primary} radius={[8, 8, 2, 2]} animationDuration={1000} />
+                            <Tooltip formatter={(value) => `${value}`} />
+                            <Bar dataKey="price" fill={currentTheme.primary} radius={[8, 8, 2, 2]} />
                           </BarChart>
                         </ResponsiveContainer>
                       ) : (
@@ -635,7 +861,7 @@ export default function Dashboard() {
                             <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-42} textAnchor="end" height={70} />
                             <YAxis tick={{ fontSize: 11 }} />
                             <Tooltip />
-                            <Bar dataKey="quantity" fill="#198754" radius={[8, 8, 2, 2]} animationDuration={1000} />
+                            <Bar dataKey="quantity" fill="#198754" radius={[8, 8, 2, 2]} />
                           </BarChart>
                         </ResponsiveContainer>
                       ) : (
@@ -646,7 +872,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* second row */}
+              {/* Charts Row 2 */}
               <div className="row g-3 g-md-4 mb-4">
                 <div className="col-12 col-lg-6">
                   <div className="card border-0 shadow-sm h-100">
@@ -656,12 +882,12 @@ export default function Dashboard() {
                         <div className="d-flex align-items-center justify-content-center flex-column flex-sm-row">
                           <ResponsiveContainer width="60%" height={220}>
                             <PieChart>
-                              <Pie data={valueDistributionData} cx="50%" cy="50%" innerRadius={48} outerRadius={88} paddingAngle={2} dataKey="value" animationDuration={1200}>
+                              <Pie data={valueDistributionData} cx="50%" cy="50%" innerRadius={48} outerRadius={88} paddingAngle={2} dataKey="value">
                                 {valueDistributionData.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                              <Tooltip formatter={(value) => `${value.toFixed(2)}`} />
                             </PieChart>
                           </ResponsiveContainer>
                           <div className="ms-3 mt-3 mt-sm-0">
@@ -691,7 +917,7 @@ export default function Dashboard() {
                             <XAxis dataKey="range" tick={{ fontSize: 11 }} />
                             <YAxis tick={{ fontSize: 11 }} />
                             <Tooltip />
-                            <Line type="monotone" dataKey="count" stroke="#6610f2" strokeWidth={3} dot={{ fill: "#6610f2", r: 5 }} animationDuration={1200} />
+                            <Line type="monotone" dataKey="count" stroke="#6610f2" strokeWidth={3} dot={{ fill: "#6610f2", r: 5 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (
@@ -702,14 +928,14 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* recent products table */}
+              {/* Recent Products Table */}
               <div className="card border-0 shadow-sm">
                 <div className="card-body p-3">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h5 className="mb-0 fw-semibold">Recent Products Overview</h5>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input className="form-control form-control-sm" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: 220 }} />
-                      <select className="form-select form-select-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: 150 }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input className="form-control form-control-sm" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: "180px", minWidth: "140px" }} />
+                      <select className="form-select form-select-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: "150px", minWidth: "130px" }}>
                         <option value="date">Sort by Date</option>
                         <option value="name">Sort by Name</option>
                         <option value="price">Sort by Price</option>
@@ -733,8 +959,8 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                           {recentTransactions.map((txn, idx) => (
-                            <tr key={idx}>
-                              <td className="fw-semibold small" style={{ cursor: "pointer" }} onClick={() => openProductDetail(txn.raw)}>{txn.product}</td>
+                            <tr key={idx} style={{ cursor: "pointer" }} onClick={() => openProductDetail(txn.raw)}>
+                              <td className="fw-semibold small">{txn.product}</td>
                               <td className="text-muted small d-none d-sm-table-cell">{txn.date}</td>
                               <td className="text-muted small d-none d-md-table-cell">{txn.time}</td>
                               <td className="small">{txn.quantity}</td>
@@ -762,16 +988,21 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          ) : (
-            /* PRODUCTS view (compact) */
+          )}
+
+          {activeTab === "products" && (
             <div className="fade-in-up">
-              <div className="card border-0 shadow-sm mb-4">
-                <div className="card-body p-3">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body p-3 p-md-4">
                   <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h4 className="mb-0 fw-bold">Products Management</h4>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button className="btn btn-sm" style={{ backgroundColor: currentTheme.primary, color: "#fff", border: "none" }} onClick={() => { setShowForm(true); setSelectedProduct(null); }}>➕ Add Product</button>
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => fetchProducts()}>↺ Refresh</button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button className="btn btn-sm" style={{ backgroundColor: currentTheme.primary, color: "#fff", border: "none" }} onClick={() => { setShowForm(true); setSelectedProduct(null); }}>
+                        ➕ Add Product
+                      </button>
+                      <button className="btn btn-sm btn-outline-secondary" onClick={() => fetchProducts()}>
+                        ↺ Refresh
+                      </button>
                     </div>
                   </div>
 
@@ -790,7 +1021,9 @@ export default function Dashboard() {
 
                   {loading ? (
                     <div className="text-center py-5">
-                      <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
                     </div>
                   ) : (
                     <div className="table-responsive">
@@ -808,26 +1041,39 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                           {filteredProducts.length === 0 ? (
-                            <tr><td colSpan="7" className="text-center text-muted py-4">No products found</td></tr>
+                            <tr>
+                              <td colSpan="7" className="text-center text-muted py-4">No products found</td>
+                            </tr>
                           ) : (
                             filteredProducts.map((p, index) => (
                               <tr key={p._id || index}>
                                 <td className="small">{index + 1}</td>
-                                <td className="fw-semibold small" style={{ cursor: "pointer" }} onClick={() => openProductDetail(p)}>{p.name || "N/A"}</td>
+                                <td className="fw-semibold small" style={{ cursor: "pointer" }} onClick={() => openProductDetail(p)}>
+                                  {p.name || "N/A"}
+                                </td>
                                 <td className="text-muted small d-none d-md-table-cell">{p.description || "N/A"}</td>
                                 <td className="small">${p.price || "0"}</td>
                                 <td>
-                                  <span className={`badge ${
-                                    parseInt(p.quantity) > 10 ? "bg-success" :
-                                    parseInt(p.quantity) > 0 ? "bg-warning text-dark" : "bg-danger"
-                                  }`} style={{ fontSize: "10px" }}>
+                                  <span
+                                    className={`badge ${
+                                      parseInt(p.quantity) > 10 ? "bg-success" :
+                                      parseInt(p.quantity) > 0 ? "bg-warning text-dark" : "bg-danger"
+                                    }`}
+                                    style={{ fontSize: "10px" }}
+                                  >
                                     {p.quantity || "0"}
                                   </span>
                                 </td>
-                                <td className="fw-semibold small d-none d-lg-table-cell">${((parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0)).toFixed(2)}</td>
+                                <td className="fw-semibold small d-none d-lg-table-cell">
+                                  ${((parseFloat(p.price) || 0) * (parseInt(p.quantity) || 0)).toFixed(2)}
+                                </td>
                                 <td>
-                                  <button className="btn btn-sm btn-warning me-1" onClick={() => { setSelectedProduct(p); setShowForm(true); }}>✏️</button>
-                                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p._id)}>🗑️</button>
+                                  <button className="btn btn-sm btn-warning me-1" onClick={() => { setSelectedProduct(p); setShowForm(true); }}>
+                                    ✏️
+                                  </button>
+                                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p._id)}>
+                                    🗑️
+                                  </button>
                                 </td>
                               </tr>
                             ))
@@ -840,79 +1086,133 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+
+          {activeTab === "orders" && (
+            <div className="fade-in-up">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body p-5 text-center">
+                  <div style={{ fontSize: "72px", marginBottom: "20px" }}>🧾</div>
+                  <h4 className="fw-bold mb-2">Orders Coming Soon</h4>
+                  <p className="text-muted">Order management features will be available here.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="fade-in-up">
+              <div className="card border-0 shadow-sm">
+                <div className="card-body p-5 text-center">
+                  <div style={{ fontSize: "72px", marginBottom: "20px" }}>⚙️</div>
+                  <h4 className="fw-bold mb-2">Settings</h4>
+                  <p className="text-muted">Application settings and preferences will be available here.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Product Form Modal */}
+      {/* Modals */}
       {showForm && (
         <ProductForm
           product={selectedProduct}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => { setShowForm(false); setSelectedProduct(null); }}
           onSubmit={selectedProduct ? handleUpdate : handleCreate}
           loading={formLoading}
           themeColor={currentTheme.primary}
         />
       )}
 
-      {/* Product Detail Modal */}
       {productDetail && (
-        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.45)" }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1" onClick={() => setProductDetail(null)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">Product Details</h5>
                 <button type="button" className="btn-close" onClick={() => setProductDetail(null)}></button>
               </div>
               <div className="modal-body">
-                <div className="d-flex gap-3 align-items-start">
-                  <div style={{ width: 96, height: 96, borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>
+                <div className="d-flex gap-3 align-items-start flex-column flex-sm-row">
+                  <div style={{ width: 96, height: 96, borderRadius: 12, background: `${currentTheme.primary}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, flexShrink: 0 }}>
                     📦
                   </div>
-                  <div>
-                    <h5 style={{ marginBottom: 6 }}>{productDetail.name || "Untitled"}</h5>
-                    <div className="text-muted mb-2">{productDetail.description || "No description provided."}</div>
-                    <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
-                      <div><strong>Price:</strong> ${productDetail.price || "0"}</div>
-                      <div><strong>Qty:</strong> {productDetail.quantity || "0"}</div>
-                      <div><strong>SKU:</strong> {productDetail.sku || "—"}</div>
+                  <div style={{ flex: 1 }}>
+                    <h5 style={{ marginBottom: 8 }}>{productDetail.name || "Untitled"}</h5>
+                    <div className="text-muted mb-3">{productDetail.description || "No description provided."}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
+                      <div className="p-2 bg-light rounded">
+                        <small className="text-muted d-block">Price</small>
+                        <strong>${productDetail.price || "0"}</strong>
+                      </div>
+                      <div className="p-2 bg-light rounded">
+                        <small className="text-muted d-block">Quantity</small>
+                        <strong>{productDetail.quantity || "0"}</strong>
+                      </div>
+                      <div className="p-2 bg-light rounded">
+                        <small className="text-muted d-block">SKU</small>
+                        <strong>{productDetail.sku || "—"}</strong>
+                      </div>
+                      <div className="p-2 bg-light rounded">
+                        <small className="text-muted d-block">Total Value</small>
+                        <strong>${((parseFloat(productDetail.price) || 0) * (parseInt(productDetail.quantity) || 0)).toFixed(2)}</strong>
+                      </div>
                     </div>
-                    <div style={{ marginTop: 10 }}><small className="text-muted">Added: {new Date(productDetail.createdAt || Date.now()).toLocaleString()}</small></div>
+                    <div style={{ marginTop: 16 }}>
+                      <small className="text-muted">Added: {new Date(productDetail.createdAt || Date.now()).toLocaleString()}</small>
+                    </div>
                   </div>
                 </div>
               </div>
               <div className="modal-footer border-top">
                 <button type="button" className="btn btn-secondary" onClick={() => setProductDetail(null)}>Close</button>
-                <button type="button" className="btn btn-primary" onClick={() => { setSelectedProduct(productDetail); setShowForm(true); setProductDetail(null); }}>Edit</button>
+                <button type="button" className="btn" style={{ backgroundColor: currentTheme.primary, color: "#fff" }} onClick={() => { setSelectedProduct(productDetail); setShowForm(true); setProductDetail(null); }}>
+                  Edit Product
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Profile Modal */}
       {profileOpen && (
-        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.45)" }} tabIndex="-1">
-          <div className="modal-dialog modal-dialog-centered">
+        <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1" onClick={() => setProfileOpen(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header border-bottom">
                 <h5 className="modal-title fw-bold">User Profile</h5>
                 <button type="button" className="btn-close" onClick={() => setProfileOpen(false)}></button>
               </div>
               <div className="modal-body">
-                <div className="d-flex align-items-center gap-3 mb-3">
-                  <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, #7a88a0ff, #1e3356ff)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 20 }}>
+                <div className="d-flex align-items-center gap-3 mb-4">
+                  <div style={{ width: 80, height: 80, borderRadius: "50%", background: `linear-gradient(135deg, ${currentTheme.primary}, ${currentTheme.accent})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 28, flexShrink: 0 }}>
                     {user.name ? user.name.split(" ").map(n => n[0]).slice(0,2).join("") : "U"}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700 }}>{user.name || "User"}</div>
+                    <h5 className="fw-bold mb-1">{user.name || "User"}</h5>
                     <div className="text-muted" style={{ fontSize: 14 }}>{user.email || ""}</div>
-                    {user.joined && <div className="text-muted small mt-1">Joined: {user.joined}</div>}
                   </div>
                 </div>
 
-                <div>
-                  <div className="mb-2"><strong>User ID:</strong> <span className="text-muted">{user.id || "—"}</span></div>
-                  {/* Add more fields if desired */}
+                <div className="row g-3">
+                  <div className="col-12">
+                    <div className="p-3 bg-light rounded">
+                      <small className="text-muted d-block mb-1">User ID</small>
+                      <strong>{user.id || "—"}</strong>
+                    </div>
+                  </div>
+                  <div className="col-6">
+                    <div className="p-3 bg-light rounded">
+                      <small className="text-muted d-block mb-1">Total Products</small>
+                      <strong>{stats.totalProducts}</strong>
+                    </div>
+                  </div>
+                  <div className="col-6">
+                    <div className="p-3 bg-light rounded">
+                      <small className="text-muted d-block mb-1">Total Revenue</small>
+                      <strong>${stats.totalRevenue.toFixed(2)}</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer border-top">
@@ -924,17 +1224,18 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Toast */}
       {toast && (
-        <div className={`position-fixed top-0 end-0 m-3 alert alert-${toast.type === "success" ? "success" : "danger"} shadow-lg`} style={{ zIndex: 9999 }} role="alert">
-          {toast.message}
+        <div className={`position-fixed top-0 end-0 m-3 alert alert-${toast.type === "success" ? "success" : "danger"} shadow-lg`} style={{ zIndex: 9999, minWidth: "250px" }} role="alert">
+          <div className="d-flex align-items-center">
+            <span style={{ fontSize: "20px", marginRight: "10px" }}>{toast.type === "success" ? "✓" : "✕"}</span>
+            <span>{toast.message}</span>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-/* ProductForm component */
 function ProductForm({ product, onSubmit, onCancel, loading, themeColor }) {
   const [form, setForm] = useState({
     name: product?.name || "",
@@ -958,56 +1259,164 @@ function ProductForm({ product, onSubmit, onCancel, loading, themeColor }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.name.trim() || !form.price || !form.quantity) {
+      alert("Please fill in all required fields");
+      return;
+    }
     onSubmit(form);
   };
 
   return (
-    <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} tabIndex="-1">
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content border-0 shadow-lg">
-          <div className="modal-header border-bottom">
-            <h5 className="modal-title fw-bold">{product ? "Edit Product" : "Add Product"}</h5>
-            <button type="button" className="btn-close" onClick={onCancel}></button>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="modal-body">
-              <div className="mb-3">
-                <label className="form-label fw-semibold">Product Name</label>
-                <input type="text" className="form-control" name="name" value={form.name} onChange={handleChange} placeholder="Enter product name" required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-semibold">Price ($)</label>
-                <input type="number" className="form-control" name="price" value={form.price} onChange={handleChange} placeholder="0.00" step="0.01" required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-semibold">Description</label>
-                <textarea className="form-control" name="description" value={form.description} onChange={handleChange} rows="3" placeholder="Enter product description"></textarea>
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-semibold">Quantity</label>
-                <input type="number" className="form-control" name="quantity" value={form.quantity} onChange={handleChange} placeholder="0" required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label fw-semibold">SKU (optional)</label>
-                <input type="text" className="form-control" name="sku" value={form.sku} onChange={handleChange} placeholder="SKU / Identifier" />
-              </div>
-            </div>
-            <div className="modal-footer border-top">
-              <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
-              <button type="submit" className="btn text-white" style={{ backgroundColor: themeColor, border: "none" }} disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </>
-                ) : (
-                  "Save Product"
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+   <div
+  className="modal d-block"
+  style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+  tabIndex="-1"
+  onClick={onCancel}
+>
+  <div
+    className="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+    style={{
+      maxWidth: "650px",       // Wider modal
+      width: "100%",
+      maxHeight: "90vh",       // Prevent crashing
+    }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <div className="modal-content border-0 shadow-lg" style={{ maxHeight: "90vh", overflow: "hidden" }}>
+      
+      {/* Header */}
+      <div
+        className="modal-header border-bottom"
+        style={{ background: `${themeColor}10` }}
+      >
+        <h5 className="modal-title fw-bold">
+          {product ? "✏️ Edit Product" : "➕ Add New Product"}
+        </h5>
+        <button type="button" className="btn-close" onClick={onCancel}></button>
       </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+
+        {/* Body (scrolling only inside body) */}
+        <div
+          className="modal-body"
+          style={{
+            overflowY: "auto",
+            maxHeight: "60vh",     // Body scroll → modal never crashes
+          }}
+        >
+          <div className="mb-3">
+            <label className="form-label fw-semibold">
+              Product Name <span className="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="e.g., Wireless Mouse"
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-semibold">
+              Price ($) <span className="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              className="form-control"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Description</label>
+            <textarea
+              className="form-control"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Product description (optional)"
+            ></textarea>
+          </div>
+
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">
+                Quantity <span className="text-danger">*</span>
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                name="quantity"
+                value={form.quantity}
+                onChange={handleChange}
+                placeholder="0"
+                min="0"
+                required
+              />
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-semibold">SKU</label>
+              <input
+                type="text"
+                className="form-control"
+                name="sku"
+                value={form.sku}
+                onChange={handleChange}
+                placeholder="Product code (optional)"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="modal-footer border-top bg-light">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="btn text-white"
+            style={{ backgroundColor: themeColor, border: "none" }}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Saving...
+              </>
+            ) : (
+              <>{product ? "Update" : "Create"} Product</>
+            )}
+          </button>
+        </div>
+
+      </form>
     </div>
+  </div>
+</div>
+
   );
 }
