@@ -5,8 +5,8 @@ import * as THREE from "three";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const API_PRODUCTS = "https://node-backend-nu-eight.vercel.app/api/allproducts";
-const API_SELLERS = "https://node-backend-nu-eight.vercel.app/auth/getusers";
+const API_PRODUCTS = "https://node-backend-4b48.onrender.com/api/allproducts";
+const API_SELLERS = "https://node-backend-4b48.onrender.com/auth/getusers";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -453,7 +453,7 @@ body {
 .slide img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .slider-controls {
@@ -653,19 +653,22 @@ body {
   transform: translateY(-12px);
   box-shadow: var(--shadow-xl);
 }
-
 .product-image-wrapper {
-  position: relative;
-  overflow: hidden;
   height: 280px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
 }
 
 .product-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;   /* <-- Image perfect fit */
+  object-position: center;
 }
+
 
 .product-card:hover .product-image {
   transform: scale(1.1);
@@ -1282,11 +1285,12 @@ body {
               Login
             </button>
             <button
-              className="btn btn-primary"
-              onClick={() => navigate("/register")}
-            >
-              Register
-            </button>
+  className="btn btn-secondary"
+  onClick={() => navigate("/register")}
+>
+  Register
+</button>
+
           </div>
 
           <button

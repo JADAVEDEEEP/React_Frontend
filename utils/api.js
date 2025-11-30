@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api" || "https://node-backend-nu-eight.vercel.app";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://node-backend-4b48.onrender.com/api";
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
@@ -6,56 +7,59 @@ const getAuthHeader = () => {
 };
 
 export const productAPI = {
+  // GET ALL
   getAll: async () => {
-    const token = localStorage.getItem('token'); // ✅ add this
     const res = await fetch(API_URL, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // ✅ include Bearer token
+        ...getAuthHeader(),
       },
     });
     return res.json();
   },
-  // ✅ Get product by ID
+
+  // GET BY ID
   getById: async (id) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const res = await fetch(`${API_URL}/${id}`, {
       headers: getAuthHeader(),
     });
-    return response.json();
+    return res.json();
   },
 
-  // ✅ Create new product
-  create: async (data) => {
-    const response = await fetch(API_URL, {
+  // CREATE PRODUCT (with image)
+  create: async (formData) => {
+    const res = await fetch(API_URL, "/", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
+        ...getAuthHeader(), // NO CONTENT-TYPE
       },
-      body: JSON.stringify(data),
+      body: formData,
     });
-    return response.json();
+
+    return res.json();
   },
 
-  // ✅ Update existing product
-  update: async (id, data) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+  // UPDATE PRODUCT
+  update: async (id, formData) => {
+    const res = await fetch(`${API_URL}/${id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        // ❗ DO NOT add Content-Type here
+        // Browser sets correct multipart/form-data boundary itself
       },
-      body: JSON.stringify(data),
+      body: formData,
     });
-    return response.json();
+
+    return res.json();
   },
 
-  // ✅ Delete product
+  // DELETE PRODUCT
   delete: async (id) => {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const res = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
       headers: getAuthHeader(),
     });
-    return response.json();
+
+    return res.json();
   },
 };

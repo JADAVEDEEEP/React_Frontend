@@ -35,7 +35,7 @@ export default function RegisterPlayboy() {
       setLoading(true);
 
       const res = await axios.post(
-        "https://node-backend-nu-eight.vercel.app/auth/signup",
+        "https://node-backend-4b48.onrender.com/auth/signup",
         form
       );
 
