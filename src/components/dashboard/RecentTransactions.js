@@ -6,95 +6,40 @@ export default function RecentTransactions({
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  const colors = ["#00ff88", "#00a8ff", "#ff3366"];
+  const colors = ["#3b82f6", "#10b981", "#f43f5e"]; // glow only
 
   return (
     <div
       style={{
-        padding: "60px 20px",
+        padding: "40px 20px",
         fontFamily: "'Poppins', sans-serif",
-        background: "#ffffff",
+        background: "#ffffff",        // PURE WHITE BACKGROUND
         minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
-      {/* ---------------- HEADER ADDED HERE ---------------- */}
-      <div
-        style={{
-          textAlign: "center",
-          marginBottom: "40px",
-        }}
-      >
+      {/* HEADER */}
+      <div style={{ textAlign: "center", marginBottom: "30px" }}>
         <h1
           style={{
-            fontSize: "2rem",
+            fontSize: "1.8rem",
             fontWeight: 800,
             margin: 0,
-            letterSpacing: "0.8px",
-            color: "#000",
+            color: "#111827",
           }}
         >
-          <span style={{ color: "#00ff88" }}>My</span>{" "}
-          <span style={{ color: "#000" }}>Products</span>
+          My <span style={{ color: "#3b82f6" }}>Products</span>
         </h1>
 
         <p
           style={{
-            color: "#666",
+            color: "#6b7280",
             fontSize: "0.9rem",
-            marginTop: "8px",
-            letterSpacing: "0.3px",
+            marginTop: "6px",
           }}
         >
           Manage and preview your product listings
         </p>
       </div>
-      {/* --------------------------------------------------- */}
-
-      {/* Glow Background Circles */}
-      <div
-        style={{
-          position: "absolute",
-          top: "10%",
-          left: "5%",
-          width: "400px",
-          height: "400px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, #00ff8840 0%, transparent 70%)",
-          filter: "blur(100px)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          bottom: "20%",
-          right: "10%",
-          width: "500px",
-          height: "500px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, #ff336640 0%, transparent 70%)",
-          filter: "blur(120px)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "600px",
-          height: "600px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, #00a8ff30 0%, transparent 70%)",
-          filter: "blur(140px)",
-          pointerEvents: "none",
-        }}
-      />
 
       {/* PRODUCT GRID */}
       <div className="row g-4 justify-content-center">
@@ -107,40 +52,33 @@ export default function RecentTransactions({
             <div
               key={idx}
               className="col-12 col-sm-6 col-md-4 col-lg-3"
-              style={{ cursor: "pointer", position: "relative" }}
+              style={{ cursor: "pointer" }}
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
               onClick={() => openProductDetail(p)}
             >
               <div
-                className="product-card"
                 style={{
                   width: "100%",
-                  height: "280px",
-                  borderRadius: "20px",
-                  background: "rgba(255, 255, 255, 0.3)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255, 255, 255, 0.5)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  height: "260px",
+                  borderRadius: "18px",
+                  background: "#ffffff",     // PURE WHITE
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
                   textAlign: "center",
-                  padding: "25px 20px 20px",
-                  overflow: "visible",
-                  position: "relative",
-                  transition: "0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                  transform: isHovered ? "translateY(-8px)" : "translateY(0)",
-                  zIndex: 1,
-                  display: "flex",
-                  flexDirection: "column",
+                  padding: "24px 18px",
+                  transition: "0.35s",
+                  transform: isHovered ? "translateY(-6px)" : "translateY(0)",
                 }}
               >
-                {/* Image */}
+                {/* IMAGE */}
                 <div
                   style={{
-                    height: "140px",
+                    height: "130px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginBottom: "20px",
+                    marginBottom: "12px",
                   }}
                 >
                   <img
@@ -149,17 +87,18 @@ export default function RecentTransactions({
                       "https://www.pngmart.com/files/6/Plain-White-T-Shirt-PNG-Transparent-Image.png"
                     }
                     alt={txn.product}
-                    className="float-img"
                     style={{
-                      width: "130px",
-                      height: "130px",
+                      width: "120px",
+                      height: "120px",
                       objectFit: "contain",
-                      transition: "0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                      transition: "0.35s",
+
                       filter: isHovered
-                        ? `drop-shadow(0 25px 35px ${glowColor}50)`
-                        : "drop-shadow(0 12px 18px rgba(0, 0, 0, 0.6))",
+                        ? `drop-shadow(0 20px 25px ${glowColor}40)`
+                        : "drop-shadow(0 10px 12px rgba(0,0,0,0.3))",
+
                       transform: isHovered
-                        ? "scale(1.12) translateY(-12px)"
+                        ? "scale(1.10) translateY(-10px)"
                         : "scale(1) translateY(0)",
                     }}
                   />
@@ -169,45 +108,36 @@ export default function RecentTransactions({
                 <h4
                   style={{
                     fontWeight: 600,
-                    fontSize: "0.85rem",
-                    color: "#333",
-                    marginBottom: "auto",
-                    letterSpacing: "0.3px",
-                    lineHeight: "1.3",
-                    textShadow: isHovered
-                      ? `0 0 15px ${glowColor}60`
-                      : "none",
+                    fontSize: "0.95rem",
+                    color: "#111827",
+                    marginBottom: "4px",
                   }}
                 >
                   {txn.product}
                 </h4>
 
                 {/* PRICE */}
-                <h4
+                <div
                   style={{
                     fontWeight: 700,
-                    fontSize: "1.05rem",
-                    color: isHovered ? glowColor : "#a3a7a5ff",
-                    marginTop: "auto",
-                    marginBottom: "5px",
-                    transition: "0.3s ease",
-                    textShadow: isHovered ? `0 0 10px ${glowColor}60` : "none",
+                    fontSize: "1rem",
+                    color: isHovered ? glowColor : "#6b7280",
+                    transition: "0.25s",
                   }}
                 >
                   ₹{txn.price}
-                </h4>
+                </div>
 
-                {/* Bottom Glow Line */}
+                {/* BOTTOM ACCENT */}
                 <div
                   style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: "2px",
-                    background: `linear-gradient(90deg, transparent 0%, ${glowColor} 50%, transparent 100%)`,
-                    opacity: isHovered ? 1 : 0,
-                    transition: "opacity 0.3s ease",
+                    height: "3px",
+                    width: "100%",
+                    marginTop: "14px",
+                    borderRadius: "50px",
+                    background: isHovered ? glowColor : "#e5e7eb",
+                    opacity: isHovered ? 1 : 0.4,
+                    transition: "0.35s",
                   }}
                 />
               </div>

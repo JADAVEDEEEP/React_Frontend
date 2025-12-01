@@ -426,6 +426,7 @@ export default function Dashboard() {
               setSortBy={setSortBy}
               openProductDetail={openProductDetail}
               setShowForm={setShowForm}
+              setSelectedProduct={setSelectedProduct}
               handleDelete={handleDelete}
             />
           )}
