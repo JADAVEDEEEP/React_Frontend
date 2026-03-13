@@ -45,7 +45,7 @@ export default function LoginWithNav() {
     } catch (err) {
       setMsg(
         err.response?.data?.message ||
-          "Login failed. Please check your credentials."
+        "Login failed. Please check your credentials."
       );
       setMsgType("danger");
     }

@@ -56,9 +56,8 @@ const Sidebar = ({
           style={{ height: "64px" }}
         >
           <div
-            className={`d-flex align-items-center gap-2 ${
-              sidebarCollapsed ? "justify-content-center w-100" : ""
-            }`}
+            className={`d-flex align-items-center gap-2 ${sidebarCollapsed ? "justify-content-center w-100" : ""
+              }`}
           >
             {/* BLUE GRADIENT LOGO BOX */}
             <div
@@ -122,11 +121,10 @@ const Sidebar = ({
                   setActiveTab(item.id);
                   setMobileOpen(false);
                 }}
-                className={`d-flex align-items-center gap-3 px-3 py-2 mb-1 rounded ${
-                  active
+                className={`d-flex align-items-center gap-3 px-3 py-2 mb-1 rounded ${active
                     ? "bg-primary text-white"
                     : "text-dark hover-bg-light"
-                }`}
+                  }`}
                 style={{ cursor: "pointer", transition: "0.2s" }}
               >
                 <Icon size={20} />
