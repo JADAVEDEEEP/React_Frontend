@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { AUTH_URL } from "../utils/apiBase";
 
 export default function RegisterPlayboy() {
   const navigate = useNavigate();
@@ -34,10 +35,7 @@ export default function RegisterPlayboy() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "https://node-backend-4b48.onrender.com/auth/signup",
-        form
-      );
+      const res = await axios.post(`${AUTH_URL}/signup`, form);
 
       setMsg(res.data.message);
       setMsgType("success");

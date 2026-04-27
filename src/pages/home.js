@@ -4,9 +4,10 @@ import axios from "axios";
 import * as THREE from "three";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { API_URL, AUTH_URL } from "../utils/apiBase";
 
-const API_PRODUCTS = "https://node-backend-4b48.onrender.com/api/allproducts";
-const API_SELLERS = "https://node-backend-4b48.onrender.com/auth/getusers";
+const API_PRODUCTS = `${API_URL}/allproducts`;
+const API_SELLERS = `${AUTH_URL}/getusers`;
 
 export default function HomePage() {
   const navigate = useNavigate();

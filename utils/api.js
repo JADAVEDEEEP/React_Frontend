@@ -1,5 +1,12 @@
+const LOCAL_API_URL = "http://localhost:8080/api";
+const DEPLOYED_API_URL = "https://node-backend-4b48.onrender.com/api";
+
+const isLocalhost =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://node-backend-4b48.onrender.com/api";
+  process.env.REACT_APP_API_URL || (isLocalhost ? LOCAL_API_URL : DEPLOYED_API_URL);
 
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
@@ -27,7 +34,7 @@ export const productAPI = {
 
   // CREATE PRODUCT (with image)
   create: async (formData) => {
-    const res = await fetch(API_URL, "/", {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: {
         ...getAuthHeader(), // NO CONTENT-TYPE

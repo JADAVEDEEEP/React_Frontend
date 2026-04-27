@@ -18,11 +18,11 @@ import ProductsTable from "../components/dashboard/ProductsTable";
 import ProductForm from "../components/dashboard/ProductForm";
 import ProductDetailsModal from "../components/dashboard/ProductDetailsModal";
 import ProfileModal from "../components/dashboard/ProfileModal";
+import { API_URL } from "../utils/apiBase";
 
 /**
  * CONFIG
  */
-const API_URL = "https://node-backend-4b48.onrender.com/api";
 
 /**
  * MAIN COMPONENT
