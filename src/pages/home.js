@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import * as THREE from "three";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { API_URL, AUTH_URL } from "../utils/apiBase";
 
@@ -18,9 +16,6 @@ export default function HomePage() {
   const [isPaused, setIsPaused] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const threeRef = useRef(null);
-  const rendererRef = useRef(null);
-  const animRef = useRef(null);
 
   // Inject enhanced CSS with animations
   useEffect(() => {

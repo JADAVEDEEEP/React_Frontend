@@ -1,6 +1,6 @@
 import React from "react";
 import { GiTShirt } from "react-icons/gi";
-import { Edit, Trash2, Plus, Search } from "lucide-react";
+import { Edit, Trash2, Search } from "lucide-react";
 
 const ProductsTable = ({
     products,
@@ -178,6 +178,7 @@ const ProductsTable = ({
                                                 >
                                                     <img
                                                         src={product.image}
+                                                        alt={product.name || "Product"}
                                                         className="w-100 h-100"
                                                         style={{ objectFit: "cover" }}
                                                     />
@@ -304,6 +305,7 @@ const ProductsTable = ({
                                         >
                                             <img
                                                 src={product.image}
+                                                alt={product.name || "Product"}
                                                 className="w-100 h-100"
                                                 style={{ objectFit: "cover" }}
                                             />

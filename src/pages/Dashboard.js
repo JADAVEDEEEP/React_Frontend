@@ -39,7 +39,6 @@ export default function Dashboard() {
 
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -53,7 +52,7 @@ export default function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [productDetail, setProductDetail] = useState(null);
-  const [animateTrigger, setAnimateTrigger] = useState(0);
+  const animateTrigger = 0;
 
   /* =======================
      AXIOS INSTANCE
@@ -105,7 +104,6 @@ export default function Dashboard() {
   ======================== */
   const fetchProducts = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await axiosInstance.get("/");
 
       if (res.data && res.data.success === true) {
@@ -145,8 +143,6 @@ export default function Dashboard() {
         setProducts([]);
         setFilteredProducts([]);
       }
-    } finally {
-      setLoading(false);
     }
   }, [axiosInstance, showToast]);
 
